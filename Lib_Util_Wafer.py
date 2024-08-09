@@ -13,8 +13,14 @@ class Util_Wafer(object):
         x1, x2 = rect_center.x - rect_w / 2, rect_center.x + rect_w / 2
         y1, y2 = rect_center.y - rect_h / 2, rect_center.y + rect_h / 2
         rect   = pya.DBox(pya.DPoint(x1, y1), pya.DPoint(x2, y2))
-        valid  = [ebr_poly.touches(rect), mask_poly.touches(rect)]
-        return valid
+        valid  = (ebr_poly.touches(rect), mask_poly.touches(rect))
+        return {
+            (True,  True ) : "PARTIAL",
+            (True,  False) : "FULL",
+            (False, True ) : "OUT",
+            (False, False) : "OUT",
+
+        }[valid]
 
     def chip_full_scribe(x, y, unit, chip_w, chip_h, scribe_w, scribe_h):
         cp             = pya.DPoint(x, y)
@@ -61,18 +67,39 @@ class Util_Wafer(object):
             "scribe_b"  : pya.DPolygon(STL.rect(cp.x - bx_offset, cp.y - by_offset, scribe_hori_w, scribe_h )),
         }    
          
-    def chip_with_scribe(x, y, unit, chip_w, chip_h, scribe_w, scribe_h, scribe_option = 1):
+    def chip_with_scribe(x, y, unit, chip_w, chip_h, scribe_w, scribe_h, scribe_option = 1, mask_poly = None):
+        chip_data = None
+
         if scribe_option == 0:
-            return Util_Wafer.chip_full_scribe(x, y, unit, chip_w, chip_h, scribe_w, scribe_h)
+            chip_data = Util_Wafer.chip_full_scribe(x, y, unit, chip_w, chip_h, scribe_w, scribe_h)
 
         if scribe_option == 1:
-            return Util_Wafer.chip_half_scribe(x, y, unit, chip_w, chip_h, scribe_w, scribe_h)
+            chip_data = Util_Wafer.chip_half_scribe(x, y, unit, chip_w, chip_h, scribe_w, scribe_h)
 
         if scribe_option == 2:
-            return Util_Wafer.chip_L_scribe   (x, y, unit, chip_w, chip_h, scribe_w, scribe_h)
+            chip_data = Util_Wafer.chip_L_scribe   (x, y, unit, chip_w, chip_h, scribe_w, scribe_h)
         
+        if None in [mask_poly, chip_data]:
+            return chip_data
 
-    def shot(x, y, unit, shot_w, shot_h, chip_w, chip_h, scribe_w, scribe_h, scribe_option = 1, teg_loc = "", skip_loc = ""):
+        
+        chip_poly     = chip_data.get("chip")
+        scribe_l_poly = chip_data.get("scribe_l")
+        scribe_r_poly = chip_data.get("scribe_r")
+        scribe_t_poly = chip_data.get("scribe_t")
+        scribe_b_poly = chip_data.get("scribe_b")
+        mask_reg      = pya.Region(mask_poly.to_itype(unit))
+        get_partial   = lambda poly : [(mask_reg & pya.Region(poly.to_itype(unit))).each()][0] if poly else None
+
+        return {
+            "chip"      : get_partial(chip_poly    ), 
+            "scribe_l"  : get_partial(scribe_l_poly), 
+            "scribe_r"  : get_partial(scribe_r_poly), 
+            "scribe_t"  : get_partial(scribe_t_poly), 
+            "scribe_b"  : get_partial(scribe_b_poly), 
+        }
+
+    def shot(x, y, unit, shot_w, shot_h, chip_w, chip_h, scribe_w, scribe_h, scribe_option = 1, teg_loc = "", skip_loc = "", partial_loc = "", mask_poly = None):
         result = {
             "row"        :  0,
             "column"     :  0,
@@ -95,6 +122,7 @@ class Util_Wafer(object):
         teg_count    = 0
         teg_row_col  = []
         skip_row_col = []
+        partial_row_col = []
 
         if teg_loc:
             teg_loc_str = re.sub(';+', ' ', re.sub(' +', '',  teg_loc))
@@ -104,28 +132,42 @@ class Util_Wafer(object):
             skip_loc_str = re.sub(';+', ' ', re.sub(' +', '',  skip_loc))
             skip_row_col = [f for f in re.findall( r"[0-9]+,[0-9]+", skip_loc_str)]
 
+        if partial_loc:
+            partial_loc_str = re.sub(';+', ' ', re.sub(' +', '',  partial_loc))
+            partial_row_col = [f for f in re.findall( r"[0-9]+,[0-9]+", partial_loc_str)]
+
         for r, c in np.ndindex((row+1, column+1)) :
-
-            recog = f"{r+1},{c+1}"
-            
-            if recog in skip_row_col : continue
-
+            recog        = f"{r+1},{c+1}"
             chip_content = {}
-            attri        = 0
+            attri        = 1
             is_teg       = (recog in teg_row_col)
+            is_skip      = (recog in skip_row_col)
+            is_partial   = (recog in partial_row_col)
             place_cell   = not(r == row) and not(c == column)
             pitch_loc    = pya.DPoint(c * pitch_x, r * pitch_y)
+
+            if is_skip : continue
 
             if place_cell:
                 chip_loc     = chip_cp + pitch_loc
                 chip_content = Util_Wafer.chip_with_scribe(chip_loc.x, chip_loc.y, unit, chip_w, chip_h, scribe_w, scribe_h, scribe_option)
 
-                if is_teg:
-                    attri       = 1
+                if   [is_teg, is_partial] == [ True, False]:
+                    attri       = 2
                     teg_count  += 1
+
+                elif [is_teg, is_partial] == [False, False]:
+                    attri       = 1
+                    chip_count += 1
+
+                elif [is_teg, is_partial] == [False,  True]:
+                    attri       = -1
+
+                elif [is_teg, is_partial] == [ True,  True]:
+                    attri       = -2
+
                 else : 
                     attri       = 0
-                    chip_count += 1
 
             result["placement"][recog] = {
                 "attri"  : attri,

@@ -35,13 +35,14 @@ reload(Lib_SEMI)
 
 from Lib_STL        import STL
 from Lib_Util_Wafer import Util_Wafer
-from Lib_SEMI       import Shot, Wafer, WaferMap
+from Lib_SEMI       import Chip, Shot, Wafer, WaferMap
 
 
 
 class SEMI(pya.Library):
   def __init__(self):
     self.description = "SEMI"
+    self.layout().register_pcell("Chip",     Chip())
     self.layout().register_pcell("Shot",     Shot())
     self.layout().register_pcell("Wafer",    Wafer())
     self.layout().register_pcell("WaferMap", WaferMap())    
