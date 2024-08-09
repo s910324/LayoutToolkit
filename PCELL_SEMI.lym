@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>true</autorun>
+ <autorun-early>false</autorun-early>
+ <priority>0</priority>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>
+import os
+import re
+import sys
+import pya
+from   importlib import reload  
+
+importPath  = os.path.dirname(__file__)
+if not importPath in sys.path:
+    sys.path.insert(0, importPath)
+
+import Lib_STL
+import Lib_Util_Wafer
+import Lib_SEMI
+reload(Lib_STL)
+reload(Lib_Util_Wafer)
+reload(Lib_SEMI)
+
+from Lib_STL        import STL
+from Lib_Util_Wafer import Util_Wafer
+from Lib_SEMI       import Shot, Wafer, WaferMap
+
+
+
+class SEMI(pya.Library):
+  def __init__(self):
+    self.description = "SEMI"
+    self.layout().register_pcell("Shot",     Shot())
+    self.layout().register_pcell("Wafer",    Wafer())
+    self.layout().register_pcell("WaferMap", WaferMap())    
+    self.register("SEMI")
+
+SEMI()
+
+</text>
+</klayout-macro>
