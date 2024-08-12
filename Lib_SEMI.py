@@ -22,7 +22,7 @@ class Chip(pya.PCellDeclarationHelper):
 
     def display_text_impl(self):
         class_name  = self.__class__.__name__
-        custom_name = (self.name + "__" if self.name else "") 
+        custom_name = (self.name + "_" if self.name else "") 
         chip_size   = "_%.2fx%.2f" % (self.chip_w, self.chip_h)
 
         return "%s%s%s" % (custom_name, class_name, chip_size)
@@ -91,7 +91,7 @@ class Shot(pya.PCellDeclarationHelper):
         
     def display_text_impl(self):
         class_name  = self.__class__.__name__
-        custom_name = (self.name + "__" if self.name else "") 
+        custom_name = (self.name + "_" if self.name else "") 
         shot_size  = "_%.2fx%.2f" % (self.shot_w, self.shot_h)
 
         return "%s%s%s" % (custom_name, class_name, shot_size)
@@ -113,11 +113,10 @@ class Shot(pya.PCellDeclarationHelper):
     def transformation_from_shape_impl(self):
         return pya.Trans(self.shape.bbox().center())
 
-    def insert_chip_cell(self, x, y, layer_chip, layer_scribe):
+    def insert_chip_cell(self, x, y, layer_chip, layer_scribe, name = ""):
         um         = 1/ self.layout.dbu
-        print(layer_chip, layer_scribe)
         chip_param = [
-            "", layer_chip, layer_scribe, self.chip_w, self.chip_h, self.scribe_w, self.scribe_h, self.scribe_config
+            name, layer_chip, layer_scribe, self.chip_w, self.chip_h, self.scribe_w, self.scribe_h, self.scribe_config
         ]
         chip_pcell = STL.pcell(self.layout, "SEMI", "Chip",  x * um, y * um, 0, chip_param, pya.Vector(0, 0), pya.Vector(0, 0), 0, 0)
         self.cell.insert(chip_pcell)
@@ -128,16 +127,17 @@ class Shot(pya.PCellDeclarationHelper):
 
         if self.place_chip :            
             shot_params   = Util_Wafer.shot(0, 0, unit, self.shot_w, self.shot_h, self.chip_w, self.chip_h, self.scribe_w, self.scribe_h, self.scribe_config, self.teg_loc, self.skip_loc, self.partial_loc)
-            row           = shot_params["row"]
-            column        = shot_params["column"]
-            teg_count     = shot_params["teg_count"]
-            chip_count    = shot_params["chip_count"]
-            placement     = shot_params["placement"]
+            row           = shot_params.get("row")
+            column        = shot_params.get("column")
+            teg_count     = shot_params.get("teg_count")
+            chip_count    = shot_params.get("chip_count")
+            placement     = shot_params.get("placement")
 
             for k in placement:
-                attri      = placement[k]["attri"]
-                chip_rect  = placement[k]["chip"]
-                scribes    = [s for s in placement[k]["scribe"] if s]
+                attri      = placement[k].get("attri")
+                chip_name  = placement[k].get("name")
+                chip_rect  = placement[k].get("chip")
+                scribes    = [s for s in placement[k].get("scribe") if s]
                 chip_layer = {
                     -2 : self.teg_partial,
                     -1 : self.chip_partial,
@@ -152,7 +152,7 @@ class Shot(pya.PCellDeclarationHelper):
                 }[attri > 0 ]
 
                 if chip_rect:
-                    self.insert_chip_cell(chip_rect.bbox().center().x, chip_rect.bbox().center().y, chip_layer, scribe_layer)
+                    self.insert_chip_cell(chip_rect.bbox().center().x, chip_rect.bbox().center().y, chip_layer, scribe_layer, name = chip_name)
             
         fsize  = min([self.shot_w, self.shot_h])/2
         fwidth = fsize * 0.1
@@ -181,7 +181,7 @@ class Wafer(pya.PCellDeclarationHelper):
     
     def display_text_impl(self):
         class_name  = self.__class__.__name__
-        custom_name = (self.name + "__" if self.name else "")
+        custom_name = (self.name + "_" if self.name else "")
         wafer_inch  = list(self.wafer_size_dict.keys())[list(self.wafer_size_dict.values()).index( self.wafer_size_option)]
         wafer_size  = "_%d_inch" % (wafer_inch)
 
@@ -205,9 +205,9 @@ class Wafer(pya.PCellDeclarationHelper):
         inch         = list(self.wafer_size_dict.keys())[list(self.wafer_size_dict.values()).index( self.wafer_size_option)]
         wafer_params = Util_Wafer.wafer(0, 0, inch, unit, self.edge_exclude, p = self.circle_dots)
 
-        self.cell.shapes(self.gulde_layer).insert(wafer_params["guide"])
-        self.cell.shapes(self.wafer_layer).insert(wafer_params["wafer"])
-        self.cell.shapes(self.ebr_layer  ).insert(wafer_params["ebr"])
+        self.cell.shapes(self.gulde_layer).insert(wafer_params.get("guide"))
+        self.cell.shapes(self.wafer_layer).insert(wafer_params.get("wafer"))
+        self.cell.shapes(self.ebr_layer  ).insert(wafer_params.get("ebr"))
         self.cell.shapes(self.wafer_center_layer).insert(pya.DPolygon(STL.cross(0, 0, 6000, 6000, 20)))
         self.cell.shapes(self.wafer_direction_layer).insert(pya.DPolygon(STL.fpoints(0, 0, inch * 10000, inch * 1000)))
         
@@ -225,6 +225,11 @@ class WaferMap(pya.PCellDeclarationHelper):
         wafer_size_option  = self.param( "wafer_size_option",  self.TypeString,  "Wafer Size", default=3)
         self.wafer_size_dict = {2 : 0, 4 : 1, 6 : 2, 8 : 3, 12 : 4}
         _ = [ wafer_size_option.add_choice(f"{k}-inch",v) for k, v in self.wafer_size_dict.items()]
+        
+        wafer_rot_option  = self.param( "wafer_rot_option",  self.TypeString,  "Wafer Rotation", default=0)
+        self.wafer_rot_dict = {"Down" : 0, "Left" : 1, "Right" : 2, "Top" : 3}
+        _ = [ wafer_rot_option.add_choice(f"Flat/Notch {k}",v) for k, v in self.wafer_rot_dict.items()]
+        
         self.param("edge_exclude",         self.TypeDouble,  "Edge exclusion",                 default = 3.0,      unit = "mm")   
         
         self.param("gulde",                self.TypeLayer,   "Layer for guide line",           default = pya.LayerInfo(0,  1))
@@ -279,7 +284,7 @@ class WaferMap(pya.PCellDeclarationHelper):
         
     def display_text_impl(self):
         class_name  = self.__class__.__name__
-        custom_name = (self.name + "__" if self.name else "")
+        custom_name = (self.name + "_" if self.name else "")
         wafer_inch  = list(self.wafer_size_dict.keys())[list(self.wafer_size_dict.values()).index( self.wafer_size_option)]
         wafer_size  = "_%d_inch" % (wafer_inch)
 
@@ -297,13 +302,20 @@ class WaferMap(pya.PCellDeclarationHelper):
         self.skip_chip_cnt      =  0   if self.skip_chip_cnt <=    0 else self.skip_chip_cnt
         self.skip_teg_cnt       =  0   if self.skip_teg_cnt  <=    0 else self.skip_teg_cnt
         self.inch               = list(self.wafer_size_dict.keys())[list(self.wafer_size_dict.values()).index( self.wafer_size_option)]
+        self.flat_notch_dir     = list(self.wafer_rot_dict.keys())[list(self.wafer_rot_dict.values()).index( self.wafer_rot_option)]
         self.wafer_diameter     = Util_Wafer.waferDimension(self.inch)["diameter"]
-        self.flat_notch         = "Notch down" if self.inch >= 8 else "Flat down"
+        self.flat_notch         = ("Notch" if self.inch >= 8 else "Flat") + " " + self.flat_notch_dir
         self.wafer_radius       = self.wafer_diameter/2
         self.chip_count         = 0
         self.teg_count          = 0
         self.partial_shot_count = 0
         self.full_shot_count    = 0
+        self.wafer_rot_angle   = {
+            0 :  0,  #"Down"
+            1 : -90, #"Left"
+            2 :  90, #"Right"
+            3 : 180, #"TOP"
+        }[self.wafer_rot_option]
 
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -319,7 +331,8 @@ class WaferMap(pya.PCellDeclarationHelper):
             self.name, self.wafer_size_option, self.edge_exclude, self.gulde, self.wafer, self.ebr, 
             self.wafer_center, self.wafer_direction,  self.circle_dots
         ]
-        wafer_pcell = STL.pcell(self.layout, "SEMI", "Wafer", 0, 0, 0, wafer_param, pya.Vector(0, 0), pya.Vector(0, 0), 0, 0)
+        
+        wafer_pcell = STL.pcell(self.layout, "SEMI", "Wafer", 0, 0, self.wafer_rot_angle, wafer_param, pya.Vector(0, 0), pya.Vector(0, 0), 0, 0)
         self.cell.insert(wafer_pcell)
         
     def insert_shot_cell(self, x, y, layer_shot, skip_loc, partial_loc):
@@ -341,23 +354,24 @@ class WaferMap(pya.PCellDeclarationHelper):
 
         show_chips       = (self.chip_count + self.teg_count) > 0
         chip_count_txt   = "\n".join([ txt for txt in [
-            f"Name       : {self.name}"                                       if self.name else "",
+            f"Name       : {self.name}"                                                     if self.name else "",
             f'Wafer      : {self.inch}" EBR {self.edge_exclude} mm {self.flat_notch}',
             f"Shot size  : {round(self.shot_w, 6)} um x {round(self.shot_h, 6)} um",
+            f"Step size  : {round(self.shot_step_x, 6)} um x {round(self.shot_step_y, 6)} um",
             f"Shot offset: {round(self.shot_offset_x, 6)} um, {round(self.shot_offset_y, 6)} um",
             f"Shot count : Full {self.full_shot_count}, Partial {self.partial_shot_count}, Total {self.full_shot_count + self.partial_shot_count}",
-            f"Chip size  : {round(self.chip_w, 6)} um x {round(self.chip_h, 6)} um"               if show_chips else "", 
-            f"Scribe     : W {round(self.scribe_w, 6)} um, H {round(self.scribe_h, 6)} um"        if show_chips else "",
+            f"Chip size  : {round(self.chip_w, 6)} um x {round(self.chip_h, 6)} um"         if show_chips else "", 
+            f"Scribe     : W {round(self.scribe_w, 6)} um, H {round(self.scribe_h, 6)} um"  if show_chips else "",
             f"----------------------------------------",
-            f"Chip count : {self.chip_count}"                                 if show_chips else "", 
-            f"TEG  count : {self.teg_count}"                                  if show_chips else "",
+            f"Chip count : {self.chip_count}"                                               if show_chips else "", 
+            f"TEG  count : {self.teg_count}"                                                if show_chips else "",
         ] if len(txt) > 0])
 
         chip_count_trans = pya.DTrans((self.wafer_radius), -(self.wafer_radius - 100))
         self.cell.shapes(self.gulde_layer).insert(pya.DText(chip_count_txt, chip_count_trans))
         
     def virtual_wafer(self):
-        return Util_Wafer.wafer(0, 0, self.inch, self.layout.dbu, self.edge_exclude, p = 32, no_rounding = True)
+        return Util_Wafer.wafer(0, 0, self.inch, self.layout.dbu, self.edge_exclude, p = 32, no_rounding = True, rotation = self.wafer_rot_angle)
         
     def virtual_shot(self, teg_loc = "", skip_loc = "", partial_loc = ""):
         return Util_Wafer.shot(0, 0, self.layout.dbu, self.shot_w, self.shot_h, self.chip_w, self.chip_h, self.scribe_w, self.scribe_h, self.scribe_config, teg_loc, skip_loc, partial_loc)
@@ -365,7 +379,7 @@ class WaferMap(pya.PCellDeclarationHelper):
     def check_regs(self):
         unit         = self.layout.dbu
         wafer_params = self.virtual_wafer()
-        ebr_poly     = wafer_params["ebr"]
+        ebr_poly     = wafer_params.get("ebr")
         base_poly    = pya.DPolygon(STL.rect(0, 0, self.wafer_diameter + self.shot_w * 4, self.wafer_diameter + self.shot_h * 4))
 
         ebr_reg      = pya.Region(ebr_poly.to_itype(unit))
@@ -395,7 +409,7 @@ class WaferMap(pya.PCellDeclarationHelper):
     def shot_chip_skipper(self, shot_center_pi, shot_template, ebr_poly, mask_poly):
         skip_locs    = []
         partial_locs = []
-        for k, chip in map((lambda kv : [kv[0], kv[1]["chip"]]), shot_template.items()):
+        for k, chip in map((lambda kv : [kv[0], kv[1].get("chip")]), shot_template.items()):
             if not chip : continue
             
             valid_chip = Util_Wafer.inside_wafer(chip.bbox().center() + shot_center_pi, self.chip_w, self.chip_h, ebr_poly, mask_poly)
@@ -411,16 +425,16 @@ class WaferMap(pya.PCellDeclarationHelper):
         skip_loc_str    = ";".join(skip_locs)
         partial_loc_str = ";".join(partial_locs)
         virtual_shot_params = self.virtual_shot(teg_loc = self.teg_loc, skip_loc = skip_loc_str, partial_loc = partial_loc_str)
-        return skip_loc_str, partial_loc_str, virtual_shot_params["chip_count"], virtual_shot_params["teg_count"]
+        return skip_loc_str, partial_loc_str, virtual_shot_params.get("chip_count"), virtual_shot_params.get("teg_count")
 
     def produce_impl(self): 
         self.insert_wafer_cell()
 
         if self.place_shot :            
             check_dict       = self.check_regs()
-            ebr_poly         = check_dict["ebr"]
-            mask_poly        = check_dict["mask"]  
-            shot_template    = self.virtual_shot()["placement"] if self.place_chip else None
+            ebr_poly         = check_dict.get("ebr")
+            mask_poly        = check_dict.get("mask") 
+            shot_template    = self.virtual_shot().get("placement") if self.place_chip else None
             x0, y0, row, col = self.calc_start_point()
             skip_rrow_rcol   = []
 

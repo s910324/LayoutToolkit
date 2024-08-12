@@ -118,15 +118,27 @@ class Util_Wafer(object):
         shot_llp     = pya.DPoint(-shot_w / 2, -shot_h / 2)
         chip_cp      = shot_llp + pya.DPoint((chip_w / 2) + (scribe_w / cp_adj), (chip_h / 2) + (scribe_h / cp_adj))
 
-        chip_count   = 0
-        teg_count    = 0
-        teg_row_col  = []
-        skip_row_col = []
-        partial_row_col = []
-
+        chip_count       = 0
+        teg_count        = 0
+        teg_row_col      = []
+        skip_row_col     = []
+        partial_row_col  = []
+        teg_row_col_dict = {}
+        
         if teg_loc:
-            teg_loc_str = re.sub(';+', ' ', re.sub(' +', '',  teg_loc))
-            teg_row_col = [f for f in re.findall( r"[0-9]+,[0-9]+", teg_loc_str)]
+            teg_loc_str      = re.sub(';+', ' ', re.sub(' +', '',  teg_loc))
+            teg_name_row_col = [f for f in re.findall( r"[[\(][\w]+[\)]]?[0-9]+,[0-9]+|[0-9]+,[0-9]+", teg_loc_str)]
+            
+            for name_row_col in teg_name_row_col:
+                name    = ""
+                row_col = ""
+                if ")" in name_row_col:
+                    name, row_col = name_row_col.replace("(", "").split(")")
+                else:
+                    row_col = name_row_col
+                teg_row_col_dict[row_col] = name
+            
+            teg_row_col = list(teg_row_col_dict.keys())
             
         if skip_loc:
             skip_loc_str = re.sub(';+', ' ', re.sub(' +', '',  skip_loc))
@@ -140,11 +152,13 @@ class Util_Wafer(object):
             recog        = f"{r+1},{c+1}"
             chip_content = {}
             attri        = 1
+            
             is_teg       = (recog in teg_row_col)
             is_skip      = (recog in skip_row_col)
             is_partial   = (recog in partial_row_col)
             place_cell   = not(r == row) and not(c == column)
             pitch_loc    = pya.DPoint(c * pitch_x, r * pitch_y)
+            chip_name    = teg_row_col_dict.get(recog) if is_teg else ""
 
             if is_skip : continue
 
@@ -171,6 +185,7 @@ class Util_Wafer(object):
 
             result["placement"][recog] = {
                 "attri"  : attri,
+                "name"   : chip_name if chip_name else "", 
                 "chip"   : chip_content.get("chip"),
                 "scribe" : [chip_content.get("scribe_l"), chip_content.get("scribe_r"), chip_content.get("scribe_t"), chip_content.get("scribe_b")]
             }
@@ -216,7 +231,7 @@ class Util_Wafer(object):
             },
         }[inch]
         
-    def wafer(x, y, inch, unit, ebr = 3, p = 128, no_rounding = False):
+    def wafer(x, y, inch, unit, ebr = 3, p = 128, no_rounding = False, rotation = 0):
         mm              = 1000
         dim_params      = Util_Wafer.waferDimension(inch)
         wafer_diameter  = dim_params["diameter"]
@@ -244,8 +259,8 @@ class Util_Wafer(object):
         
         flat_notch_reg = pya.Region(flat_notch_poly.to_itype(unit))
         
-        wafer_reg      = ( guide_reg     - flat_notch_reg)
-        ebr_reg        = ( ebr_guide_reg - flat_notch_reg)
+        wafer_reg      = ( guide_reg     - flat_notch_reg).transform(pya.ICplxTrans(1, rotation, False, 0, 0))
+        ebr_reg        = ( ebr_guide_reg - flat_notch_reg).transform(pya.ICplxTrans(1, rotation, False, 0, 0))
         
         if not(no_rounding):
             wafer_reg = wafer_reg.rounded_corners(1 * mm / unit, 1 * mm / unit, 16)
