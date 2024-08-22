@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>true</autorun>
+ <autorun-early>false</autorun-early>
+ <priority>0</priority>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>
+import os
+import re
+import sys
+import pya
+from   importlib import reload  
+
+importPath  = os.path.dirname(__file__)
+if not importPath in sys.path:
+    sys.path.insert(0, importPath)
+
+import Lib_STL
+import Lib_SHAPE_PIE
+import Lib_SHAPE_ARC
+import Lib_SHAPE_CIRCLE
+import Lib_SHAPE_RING
+import Lib_SHAPE_POLYGON
+import Lib_SHAPE_RECT
+import Lib_SHAPE_RECTRING
+
+def rld():
+    from   importlib import reload 
+    reload(Lib_STL)
+    reload(Lib_SHAPE_PIE)
+    reload(Lib_SHAPE_ARC)
+    reload(Lib_SHAPE_CIRCLE)
+    reload(Lib_SHAPE_RING)
+    reload(Lib_SHAPE_POLYGON)
+    reload(Lib_SHAPE_RECT)
+    reload(Lib_SHAPE_RECTRING)
+rld()
+
+from Lib_STL            import STL
+from Lib_SHAPE_PIE      import PIE
+from Lib_SHAPE_ARC      import ARC
+from Lib_SHAPE_CIRCLE   import CIRCLE
+from Lib_SHAPE_RING     import RING
+from Lib_SHAPE_POLYGON  import POLYGON
+from Lib_SHAPE_RECT     import RECT
+from Lib_SHAPE_RECTRING import RECTRING
+
+class SHAPE(pya.Library):
+  def __init__(self):
+    self.description = "SHAPE"
+    self.layout().register_pcell("PIE",           PIE())
+    self.layout().register_pcell("ARC",           ARC())
+    self.layout().register_pcell("CIRCLE",     CIRCLE())
+    self.layout().register_pcell("RING",         RING())
+    self.layout().register_pcell("POLYGON",   POLYGON())
+    self.layout().register_pcell("RECT",         RECT())
+    self.layout().register_pcell("RECTRING", RECTRING())
+    self.register("SHAPE")
+
+SHAPE()
+
+</text>
+</klayout-macro>
