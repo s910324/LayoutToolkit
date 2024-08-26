@@ -34,6 +34,7 @@ import Lib_SHAPE_RING
 import Lib_SHAPE_POLYGON
 import Lib_SHAPE_RECT
 import Lib_SHAPE_RECTRING
+import Lib_SHAPE_SERPANT
 
 def rld():
     from   importlib import reload 
@@ -45,6 +46,7 @@ def rld():
     reload(Lib_SHAPE_POLYGON)
     reload(Lib_SHAPE_RECT)
     reload(Lib_SHAPE_RECTRING)
+    reload(Lib_SHAPE_SERPANT)
 rld()
 
 from Lib_STL            import STL
@@ -55,6 +57,7 @@ from Lib_SHAPE_RING     import RING
 from Lib_SHAPE_POLYGON  import POLYGON
 from Lib_SHAPE_RECT     import RECT
 from Lib_SHAPE_RECTRING import RECTRING
+from Lib_SHAPE_SERPANT  import SERPANT
 
 class SHAPE(pya.Library):
   def __init__(self):
@@ -66,6 +69,7 @@ class SHAPE(pya.Library):
     self.layout().register_pcell("POLYGON",   POLYGON())
     self.layout().register_pcell("RECT",         RECT())
     self.layout().register_pcell("RECTRING", RECTRING())
+    self.layout().register_pcell("SERPANT",   SERPANT())
     self.register("SHAPE")
 
 SHAPE()
