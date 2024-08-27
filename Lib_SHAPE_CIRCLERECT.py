@@ -1,6 +1,6 @@
 import pya
-
 from Lib_STL        import STL
+from Lib_MISC       import MISC
 
 class CIRCLERECT(pya.PCellDeclarationHelper):
     def __init__(self):
@@ -45,7 +45,8 @@ class CIRCLERECT(pya.PCellDeclarationHelper):
         self.param("circle_x",     self.TypeDouble,  "Circle Origin X",    unit =  "um",  default =    0)
         self.param("circle_y",     self.TypeDouble,  "Circle Origin Y",    unit =  "um",  default =    0)
         self.param("points",       self.TypeInt,     "Circle Points",      unit = "pts",  default =   32)
-
+        self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",   default =    0)
+        
         _ = [ self.c_option.add_choice(k,v) for k, v in self.center_option_dict.items()]
         _ = [ self.b_option.add_choice(k,v) for k, v in self.bool_option_dict.items()]
         _ = [ self.r_option.add_choice(k,v) for k, v in self.dimension_option_dict.items()]
@@ -58,10 +59,10 @@ class CIRCLERECT(pya.PCellDeclarationHelper):
         return "_".join([ n for n in [custom_name, class_name, param_name] if n ])
 
     def coerce_parameters_impl(self):         
-        self.size_w     =           0 if self.size_w   <= 0         else self.size_w
-        self.size_h     =           0 if self.size_h   <= 0         else self.size_h
-        self.size_r     =           0 if self.size_r   <= 0         else self.size_r
-        self.points     =           4 if self.points   <= 4         else self.points 
+        self.size_w = MISC.f_coerce(self.size_w,  0)
+        self.size_h = MISC.f_coerce(self.size_h,  0)
+        self.size_r = MISC.f_coerce(self.size_r,  0)
+        self.points = MISC.f_coerce(self.points,  4)
 
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -107,7 +108,9 @@ class CIRCLERECT(pya.PCellDeclarationHelper):
             result = rect_r + cir_r
         elif self.bool_option == 4 : # "Circle diff Rect" 
             result = rect_r ^ cir_r 
-        
-        self.cell.shapes(self.main_layer).insert(result)
+
+        obj = MISC.bias(result, self.bias, self.layout.dbu)
+            
+        self.cell.shapes(self.main_layer).insert(obj)
 
         

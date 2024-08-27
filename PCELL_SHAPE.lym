@@ -27,6 +27,7 @@ if not importPath in sys.path:
     sys.path.insert(0, importPath)
 
 import Lib_STL
+import Lib_MISC
 import Lib_SHAPE_PIE
 import Lib_SHAPE_ARC
 import Lib_SHAPE_CIRCLE
@@ -42,6 +43,7 @@ import Lib_SHAPE_TRIANGLE_ISO
 def rld():
     from   importlib import reload 
     reload(Lib_STL)
+    reload(Lib_MISC)
     reload(Lib_SHAPE_PIE)
     reload(Lib_SHAPE_ARC)
     reload(Lib_SHAPE_CIRCLE)
@@ -56,6 +58,7 @@ def rld():
 rld()
 
 from Lib_STL                import STL
+from Lib_MISC               import MISC
 from Lib_SHAPE_PIE          import PIE
 from Lib_SHAPE_ARC          import ARC
 from Lib_SHAPE_CIRCLE       import CIRCLE

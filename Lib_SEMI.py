@@ -4,6 +4,7 @@ import math
 import numpy as np
 
 from Lib_STL        import STL
+from Lib_MISC       import MISC
 from Lib_Util_Wafer import Util_Wafer
 
 class Chip(pya.PCellDeclarationHelper):
@@ -28,10 +29,10 @@ class Chip(pya.PCellDeclarationHelper):
         return "%s%s%s" % (custom_name, class_name, chip_size)
 
     def coerce_parameters_impl(self):                  
-        self.chip_w   = 1000 if self.chip_w   <= 1000 else self.chip_w
-        self.chip_h   = 1000 if self.chip_h   <= 1000 else self.chip_h
-        self.scribe_w =  0   if self.scribe_w <=    0 else self.scribe_w
-        self.scribe_h =  0   if self.scribe_h <=    0 else self.scribe_h
+        self.chip_w   = MISC.f_coerce(self.chip_w,  1000)
+        self.chip_h   = MISC.f_coerce(self.chip_h,  1000)
+        self.scribe_w = MISC.f_coerce(self.scribe_w,   0)
+        self.scribe_h = MISC.f_coerce(self.scribe_h,   0)
 
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -97,12 +98,12 @@ class Shot(pya.PCellDeclarationHelper):
         return "%s%s%s" % (custom_name, class_name, shot_size)
     
     def coerce_parameters_impl(self):                  
-        self.shot_w   = 5000 if self.shot_w   <= 5000 else self.shot_w
-        self.shot_h   = 5000 if self.shot_h   <= 5000 else self.shot_h
-        self.chip_w   = 1000 if self.chip_w   <= 1000 else self.chip_w
-        self.chip_h   = 1000 if self.chip_h   <= 1000 else self.chip_h
-        self.scribe_w =  0   if self.scribe_w <=    0 else self.scribe_w
-        self.scribe_h =  0   if self.scribe_h <=    0 else self.scribe_h
+        self.shot_w   = MISC.f_coerce(self.shot_w,  5000)
+        self.shot_h   = MISC.f_coerce(self.shot_h,  5000)
+        self.chip_w   = MISC.f_coerce(self.chip_w,  1000)
+        self.chip_h   = MISC.f_coerce(self.chip_h,  1000)
+        self.scribe_w = MISC.f_coerce(self.scribe_w,   0)
+        self.scribe_h = MISC.f_coerce(self.scribe_h,   0)
 
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -188,8 +189,8 @@ class Wafer(pya.PCellDeclarationHelper):
         return "%s%s%s" % (custom_name, class_name, wafer_size,)
     
     def coerce_parameters_impl(self):  
-        self.edge_exclude =   0 if self.edge_exclude <=  0 else self.edge_exclude
-        self.circle_dots  =  32 if self.circle_dots  <= 32 else self.circle_dots
+        self.edge_exclude = MISC.f_coerce(self.edge_exclude,  0)
+        self.circle_dots  = MISC.f_coerce(self.circle_dots,  32)
 
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -291,16 +292,16 @@ class WaferMap(pya.PCellDeclarationHelper):
         return "%s%s%s" % (custom_name, class_name, wafer_size,)
     
     def coerce_parameters_impl(self):  
-        self.shot_step_x        = 5000 if self.shot_step_x   <= 5000 else self.shot_step_x
-        self.shot_step_y        = 5000 if self.shot_step_y   <= 5000 else self.shot_step_y
-        self.shot_w             = 5000 if self.shot_w        <= 5000 else self.shot_w
-        self.shot_h             = 5000 if self.shot_h        <= 5000 else self.shot_h
-        self.chip_w             = 1000 if self.chip_w        <= 1000 else self.chip_w
-        self.chip_h             = 1000 if self.chip_h        <= 1000 else self.chip_h
-        self.scribe_w           =  0   if self.scribe_w      <=    0 else self.scribe_w
-        self.scribe_h           =  0   if self.scribe_h      <=    0 else self.scribe_h
-        self.skip_chip_cnt      =  0   if self.skip_chip_cnt <=    0 else self.skip_chip_cnt
-        self.skip_teg_cnt       =  0   if self.skip_teg_cnt  <=    0 else self.skip_teg_cnt
+        self.shot_step_x        = MISC.f_coerce(self.shot_step_x,  5000)
+        self.shot_step_y        = MISC.f_coerce(self.shot_step_y,  5000)
+        self.shot_w             = MISC.f_coerce(self.shot_w,       5000)
+        self.shot_h             = MISC.f_coerce(self.shot_h,       5000)
+        self.chip_w             = MISC.f_coerce(self.chip_w,       1000)
+        self.chip_h             = MISC.f_coerce(self.chip_w,       1000)
+        self.scribe_w           = MISC.f_coerce(self.scribe_w,        0)
+        self.scribe_h           = MISC.f_coerce(self.scribe_w,        0)
+        self.skip_chip_cnt      = MISC.f_coerce(self.skip_chip_cnt,   0)
+        self.skip_teg_cnt       = MISC.f_coerce(self.skip_teg_cnt,    0)
         self.inch               = list(self.wafer_size_dict.keys())[list(self.wafer_size_dict.values()).index( self.wafer_size_option)]
         self.flat_notch_dir     = list(self.wafer_rot_dict.keys())[list(self.wafer_rot_dict.values()).index( self.wafer_rot_option)]
         self.wafer_diameter     = Util_Wafer.waferDimension(self.inch)["diameter"]

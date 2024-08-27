@@ -1,6 +1,6 @@
 import pya
-
 from Lib_STL        import STL
+from Lib_MISC       import MISC
 
 class PIE(pya.PCellDeclarationHelper):
     def __init__(self):
@@ -28,7 +28,7 @@ class PIE(pya.PCellDeclarationHelper):
         self.param("pie_points",   self.TypeInt,     "Pie Points",         unit = "pts",  default =   32)
         self.param("rounding",     self.TypeDouble,  "Rounding",           unit =  "um",  default =    0)
         self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",  default =   32)
-        
+        self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",   default =    0)
         self.r_option = self.param("center_option", self.TypeString,  "Round Center Options",  default = 1)
 
         _ = [ self.d_option.add_choice(k,v) for k, v in self.dimension_option_dict.items()]
@@ -44,10 +44,10 @@ class PIE(pya.PCellDeclarationHelper):
         
 
     def coerce_parameters_impl(self):         
-        self.size       =           0 if self.size       <= 0           else self.size
-        self.rounding   =           0 if self.rounding   <= 0           else self.rounding
-        self.pie_points =           4 if self.pie_points <= 4           else self.pie_points  
-        self.points     =           4 if self.points     <= 4           else self.points 
+        self.size       = MISC.f_coerce(self.size,       0)
+        self.rounding   = MISC.f_coerce(self.rounding,   0)
+        self.pie_points = MISC.f_coerce(self.pie_points, 4)
+        self.points     = MISC.f_coerce(self.points,     4)
 
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -95,6 +95,8 @@ class PIE(pya.PCellDeclarationHelper):
 
                 poly_rnd = pya.DPolygon(patched_p)
             poly = poly_rnd
-                
-        self.cell.shapes(self.main_layer).insert(poly)
+            
+        obj = MISC.bias(poly, self.bias, self.layout.dbu)
+            
+        self.cell.shapes(self.main_layer).insert(obj)
         

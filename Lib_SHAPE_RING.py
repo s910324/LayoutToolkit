@@ -1,6 +1,6 @@
 import pya
-
 from Lib_STL        import STL
+from Lib_MISC       import MISC
 
 class RING(pya.PCellDeclarationHelper):
     def __init__(self):
@@ -28,7 +28,7 @@ class RING(pya.PCellDeclarationHelper):
         self.param("start_a",      self.TypeDouble,  "Start Angle",        unit = "deg",  default =    0)
 
         self.param("ring_points",  self.TypeInt,     "Ring Points",        unit = "pts",  default =   32)
-        
+        self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",   default =    0)
 
         _ = [ self.d_option.add_choice(k,v) for k, v in self.dimension_option_dict.items()]
         _ = [ self.g_option.add_choice(k,v) for k, v in self.geometry_option_dict.items()]
@@ -42,9 +42,9 @@ class RING(pya.PCellDeclarationHelper):
     
         
     def coerce_parameters_impl(self):         
-        self.line_w      =           0 if self.line_w      <= 0           else self.line_w     
-        self.size        = self.line_w if self.size        <= self.line_w else self.size
-        self.ring_points =           4 if self.ring_points <= 4           else self.ring_points  
+        self.line_w      = MISC.f_coerce(self.line_w,         0)  
+        self.size        = MISC.f_coerce(self.size, self.line_w) 
+        self.ring_points = MISC.f_coerce(self.ring_points,    4)  
 
 
     def can_create_from_shape_impl(self):
@@ -66,6 +66,7 @@ class RING(pya.PCellDeclarationHelper):
         dpoints_in    = STL.arc(0, 0, r = radius_in,  p = self.ring_points, deg1 = self.start_a,     deg2=self.start_a + 360, center_pt = False)
         dpoints_out   = STL.arc(0, 0, r = radius_out, p = self.ring_points, deg1=self.start_a + 360, deg2 = self.start_a,     center_pt = False)
         poly          = pya.DPolygon(dpoints_in + dpoints_out)     
+        obj           = MISC.bias(poly, self.bias, self.layout.dbu)
             
-        self.cell.shapes(self.main_layer).insert(poly)
+        self.cell.shapes(self.main_layer).insert(obj)
         

@@ -1,6 +1,6 @@
 import pya
-
 from Lib_STL        import STL
+from Lib_MISC       import MISC
 
 class POLYGON(pya.PCellDeclarationHelper):
     def __init__(self):
@@ -30,7 +30,7 @@ class POLYGON(pya.PCellDeclarationHelper):
         
         self.param("rounding",     self.TypeDouble,  "Rounding",           unit =  "um",   default =    0)
         self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",   default =   32)
-
+        self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",    default =    0)
         _ = [ self.d_option.add_choice(k,v) for k, v in self.dimension_option_dict.items()]
         _ = [ self.n_option.add_choice(k,v) for k, v in self.normal_option_dict.items()]
 
@@ -43,10 +43,10 @@ class POLYGON(pya.PCellDeclarationHelper):
     
         
     def coerce_parameters_impl(self):         
-        self.sides    = 3 if self.sides    <= 3 else self.sides     
-        self.size     = 0 if self.size     <= 0 else self.size
-        self.rounding = 0 if self.rounding <= 0 else self.rounding
-        self.points   = 4 if self.points   <= 4 else self.points  
+        self.sides    = MISC.f_coerce(self.sides,    3)   
+        self.size     = MISC.f_coerce(self.size,     0)
+        self.rounding = MISC.f_coerce(self.rounding, 0)
+        self.points   = MISC.f_coerce(self.points,   4)
 
 
     def can_create_from_shape_impl(self):
@@ -77,5 +77,7 @@ class POLYGON(pya.PCellDeclarationHelper):
         
         if self.rounding > 0:
             poly = poly.round_corners(self.rounding, self.rounding, self.points)
+
+        obj = MISC.bias(poly, self.bias, self.layout.dbu)
             
         self.cell.shapes(self.main_layer).insert(poly)

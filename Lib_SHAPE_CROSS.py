@@ -2,47 +2,18 @@ import pya
 from Lib_STL        import STL
 from Lib_MISC       import MISC
 
-class RECT(pya.PCellDeclarationHelper):
+
+class CROSS(pya.PCellDeclarationHelper):
     def __init__(self):
-        super().__init__()
-        self.center_option_dict  = {
-            "Left Top"       : 0, 
-            "Left Center"    : 1,
-            "Left Bottom"    : 2,
-            
-            "Middle Top"     : 3,
-            "Middle Center"  : 4,
-            "Middle Bottom"  : 5,
-            
-            "Right Top"      : 6,
-            "Right Center"   : 7,
-            "Right Bottom"   : 8,
-        }
-        
-        self.modify_option_dict  = {
-            "Corner Rounding" : 0, 
-            "Corner Chamfer"  : 1, 
-        }
-        
+        super().__init__()        
         self.param("name",         self.TypeString,  "Name",                               default =   "")
         self.param("main",         self.TypeLayer,   "Layer",                              default = pya.LayerInfo(1, 0))
         
-        self.c_option = self.param("center_option", self.TypeString,  "Center Options",        default = 4)
-        self.m_option = self.param("modify_option", self.TypeString,  "Corner Modify Options", default = 1)
+        self.param("size",         self.TypeDouble,  "Size",               unit =  "um",   default =   10)
+        self.param("line_w",       self.TypeDouble,  "Line Width",         unit =  "um",   default =    2)
         
-        self.param("size_w",       self.TypeDouble,  "Width",              unit =  "um",   default =    5)
-        self.param("size_h",       self.TypeDouble,  "Height",             unit =  "um",   default =   10)
-        
-        self.param("modify_lt",    self.TypeDouble,  "Corner LT Modify",   unit =  "um",   default =    0)
-        self.param("modify_lb",    self.TypeDouble,  "Corner LB Modify",   unit =  "um",   default =    0)
-        self.param("modify_rt",    self.TypeDouble,  "Corner RT Modify",   unit =  "um",   default =    0)
-        self.param("modify_rb",    self.TypeDouble,  "Corner RB Modify",   unit =  "um",   default =    0)
-        
-        self.param("rounding",     self.TypeDouble,  "Global Rounding",    unit =  "um",   default =    0)
+        self.param("rounding",     self.TypeDouble,  "Rounding",           unit =  "um",   default =    0)
         self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",   default =   32)
-        self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",    default =    0)
-        _ = [ self.c_option.add_choice(k,v) for k, v in self.center_option_dict.items()]
-        _ = [ self.m_option.add_choice(k,v) for k, v in self.modify_option_dict.items()]
 
     def display_text_impl(self):
         class_name  = self.__class__.__name__
@@ -53,16 +24,10 @@ class RECT(pya.PCellDeclarationHelper):
     
         
     def coerce_parameters_impl(self):         
-        self.size_w    = MISC.f_coerce(self.size_w,    0)      
-        self.size_h    = MISC.f_coerce(self.size_h,    0)  
-
-        self.modify_lt = MISC.f_coerce(self.modify_lt, 0)   
-        self.modify_lb = MISC.f_coerce(self.modify_lb, 0) 
-        self.modify_rt = MISC.f_coerce(self.modify_rt, 0)   
-        self.modify_rb = MISC.f_coerce(self.modify_rb, 0)
-        
-        self.rounding  = MISC.f_coerce(self.rounding,  0)
-        self.points    = MISC.f_coerce(self.points,    4)
+        self.size     = MISC.f_coerce(self.size,     0)
+        self.line_w   = MISC.f_coerce(self.line_w,     0)
+        self.rounding = MISC.f_coerce(self.rounding,   0)
+        self.points   = MISC.f_coerce(self.points,     4)
 
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -145,9 +110,7 @@ class RECT(pya.PCellDeclarationHelper):
         if self.rounding:
             poly = poly.round_corners(self.rounding, self.rounding, self.points)
             
-        obj = MISC.bias(poly, self.bias, self.layout.dbu)
-            
-        self.cell.shapes(self.main_layer).insert(obj)
+        self.cell.shapes(self.main_layer).insert(poly)
             
             
             

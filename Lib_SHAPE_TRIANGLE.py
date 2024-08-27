@@ -1,7 +1,6 @@
-import re
 import pya
-
 from Lib_STL        import STL
+from Lib_MISC       import MISC
 
 class TRIANGLE(pya.PCellDeclarationHelper):
     def __init__(self):
@@ -17,7 +16,7 @@ class TRIANGLE(pya.PCellDeclarationHelper):
 
         self.param("rounding",     self.TypeDouble,  "Rounding",           unit =  "um",  default =    0)
         self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",  default =   32)
-
+        self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",   default =    0)
          
     def display_text_impl(self):
         class_name  = self.__class__.__name__
@@ -28,11 +27,11 @@ class TRIANGLE(pya.PCellDeclarationHelper):
            
 
     def coerce_parameters_impl(self):      
-        self.size_h   = 0 if self.size_h   < 0 else self.size_h
-        self.size_w   = 0 if self.size_w   < 0 else self.size_w
-        self.rounding = 0 if self.rounding < 0 else self.rounding
-        self.points   = 4 if self.points   < 4 else self.points
-        self.prime_a  = sorted([0, self.prime_a, 179.9])[1]
+        self.size_h   = MISC.f_coerce(self.size_h,   0)
+        self.size_w   = MISC.f_coerce(self.size_w,   0)
+        self.rounding = MISC.f_coerce(self.rounding, 0)
+        self.points   = MISC.f_coerce(self.points,   4)
+        self.prime_a  = MISC.f_coerce(self.prime_a,  0, 179.9)
             
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -57,6 +56,8 @@ class TRIANGLE(pya.PCellDeclarationHelper):
         
         if self.rounding:
             poly = poly.round_corners(self.rounding, self.rounding, self.points)
+        
+        obj = MISC.bias(poly, self.bias, self.layout.dbu)
             
-        self.cell.shapes(self.main_layer).insert(poly)
+        self.cell.shapes(self.main_layer).insert(obj)
 

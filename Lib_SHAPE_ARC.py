@@ -1,6 +1,6 @@
 import pya
-
 from Lib_STL        import STL
+from Lib_MISC       import MISC
 
 class ARC(pya.PCellDeclarationHelper):
     def __init__(self):
@@ -34,6 +34,7 @@ class ARC(pya.PCellDeclarationHelper):
         self.param("arc_points",   self.TypeInt,     "Arc Points",         unit = "pts",  default =   32)
         self.param("rounding",     self.TypeDouble,  "Rounding",           unit =  "um",  default =    0)
         self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",  default =   32)
+        self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",   default =    0)
         
 
         _ = [ self.d_option.add_choice(k,v) for k, v in self.dimension_option_dict.items()]
@@ -42,20 +43,20 @@ class ARC(pya.PCellDeclarationHelper):
     def display_text_impl(self):
         class_name  = self.__class__.__name__
         custom_name = self.name
-        param_name  = f"{self.size},{self.line_w},{self.start_a}to{self.stop_a}deg)"
+        param_name  = f"size={self.size},angle=({self.start_a}..{self.stop_a}deg)"
         
         return "_".join([ n for n in [custom_name, class_name, param_name] if n ])
     
         
 
-    def coerce_parameters_impl(self):         
-        self.line_w     =           0 if self.line_w     <= 0           else self.line_w     
-        self.size       = self.line_w if self.size       <= self.line_w else self.size
-        self.start_ext  =           0 if self.start_ext  <= 0           else self.start_ext
-        self.stop_ext   =           0 if self.stop_ext   <= 0           else self.stop_ext
-        self.rounding   =           0 if self.rounding   <= 0           else self.rounding
-        self.arc_points =           4 if self.arc_points <= 4           else self.arc_points  
-        self.points     =           4 if self.points     <= 4           else self.points 
+    def coerce_parameters_impl(self):  
+        self.line_w     = MISC.f_coerce(self.line_w,         0)
+        self.size       = MISC.f_coerce(self.size, self.line_w)
+        self.start_ext  = MISC.f_coerce(self.start_ext,      0)
+        self.stop_ext   = MISC.f_coerce(self.stop_ext,       0)
+        self.rounding   = MISC.f_coerce(self.rounding,       0)
+        self.arc_points = MISC.f_coerce(self.arc_points,     4)
+        self.points     = MISC.f_coerce(self.points,         4)
 
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -136,5 +137,7 @@ class ARC(pya.PCellDeclarationHelper):
         if (self.rounding > 0):
             poly = poly.round_corners(self.rounding, self.rounding, self.points)
             
-        self.cell.shapes(self.main_layer).insert(poly)
+        obj = MISC.bias(poly, self.bias, self.layout.dbu)
+             
+        self.cell.shapes(self.main_layer).insert(obj)
         

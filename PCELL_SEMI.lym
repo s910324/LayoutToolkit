@@ -27,13 +27,21 @@ if not importPath in sys.path:
     sys.path.insert(0, importPath)
 
 import Lib_STL
+import Lib_MISC
 import Lib_Util_Wafer
 import Lib_SEMI
-reload(Lib_STL)
-reload(Lib_Util_Wafer)
-reload(Lib_SEMI)
+
+def rld():
+    from   importlib import reload 
+    reload(Lib_STL)
+    reload(Lib_MISC)
+    reload(Lib_SEMI)
+    reload(Lib_Util_Wafer)
+    
+rld()
 
 from Lib_STL        import STL
+from Lib_MISC       import MISC
 from Lib_Util_Wafer import Util_Wafer
 from Lib_SEMI       import Chip, Shot, Wafer, WaferMap
 

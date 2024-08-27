@@ -1,6 +1,6 @@
 import pya
-
 from Lib_STL        import STL
+from Lib_MISC       import MISC
 
 class RECTRING(pya.PCellDeclarationHelper):
     def __init__(self):
@@ -35,7 +35,7 @@ class RECTRING(pya.PCellDeclarationHelper):
 
         self.param("rounding",     self.TypeDouble,  "Global Rounding",     unit =  "um",   default =  0)
         self.param("points",       self.TypeInt,     "Round Points",        unit = "pts",   default = 32)
-
+        self.param("bias",         self.TypeDouble,  "Shape Bias",          unit = "um",    default =  0)
         _ = [ self.g_option.add_choice(k,v) for k, v in self.geometry_option_dict.items()]
         _ = [ self.m_option.add_choice(k,v) for k, v in self.modify_option_dict.items()]
 
@@ -48,19 +48,19 @@ class RECTRING(pya.PCellDeclarationHelper):
     
         
     def coerce_parameters_impl(self):         
-        self.size_w     = 0 if self.size_w     <= 0 else self.size_w     
-        self.size_h     = 0 if self.size_h     <= 0 else self.size_h
+        self.size_w     = MISC.f_coerce(self.size_w,     0)   
+        self.size_h     = MISC.f_coerce(self.size_h,     0)   
         
-        self.line_t     = 0 if self.line_t     <= 0 else self.line_t
-        self.line_b     = 0 if self.line_b     <= 0 else self.line_b
-        self.line_l     = 0 if self.line_l     <= 0 else self.line_l
-        self.line_r     = 0 if self.line_r     <= 0 else self.line_r
+        self.line_t     = MISC.f_coerce(self.line_t,     0)   
+        self.line_b     = MISC.f_coerce(self.line_b,     0)   
+        self.line_l     = MISC.f_coerce(self.line_l,     0)   
+        self.line_r     = MISC.f_coerce(self.line_r,     0)   
 
-        self.modify_in  = 0 if self.modify_in  <= 0 else self.modify_in
-        self.modify_out = 0 if self.modify_out <= 0 else self.modify_out
+        self.modify_in  = MISC.f_coerce(self.modify_in,  0)   
+        self.modify_out = MISC.f_coerce(self.modify_out, 0)   
 
-        self.rounding   = 0 if self.rounding   <= 0 else self.rounding
-        self.points    =  4 if self.points     <= 4 else self.points 
+        self.rounding   = MISC.f_coerce(self.rounding,   0)   
+        self.points     = MISC.f_coerce(self.points,     4) 
 
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -135,25 +135,30 @@ class RECTRING(pya.PCellDeclarationHelper):
             0, self.points
         ]
         
-        box_pcell = STL.pcell(self.layout, "SHAPE", "RECT", x, y, 0, box_param, pya.Vector(0, 0), pya.Vector(0, 0), 0, 0)
+        box_pcell = STL.pcell(self.layout, "SHAPE", "RECT", 0, 0, 0, box_param, pya.Vector(0, 0), pya.Vector(0, 0), 0, 0)
         inst      = self.cell.insert(box_pcell)
         shape     = list(self.cell.flatten(True).each_shape(0))[0]
-        poly      = shape.polygon
-        print("BBOX IN", x, y)
-        print("BBOX POLY", poly.bbox().center())
-        print("----")
+        poly      = shape.	dpolygon.transformed(pya.DTrans(x, y))
         self.cell.clear(0)
         return poly
         
     def ring_modifier(self):
+        unit = self.layout.dbu
         in_box, out_box =  self.gen_box()
         poly_in  = self.box_modifier( in_box,  self.modify_in)
         poly_out = self.box_modifier(out_box, self.modify_out)
-        ring_reg = pya.Region(poly_out) - pya.Region(poly_in)
-        return list(ring_reg.each_merged())[0]
+        ring_reg = pya.Region(poly_out.to_itype(unit)) - pya.Region(poly_in.to_itype(unit))
+        
+        if self.rounding:
+            ring_reg.round_corners(self.rounding/unit, self.rounding/unit, self.points)
+            
+        return ring_reg
         
     def produce_impl(self):
-        poly = self.ring_modifier()
-        self.cell.shapes(self.main_layer).insert(poly)
+        unit     = self.layout.dbu
+        ring_reg = self.ring_modifier()
+        obj      = MISC.bias(ring_reg, self.bias, self.layout.dbu)
+            
+        self.cell.shapes(self.main_layer).insert(obj)
 
         

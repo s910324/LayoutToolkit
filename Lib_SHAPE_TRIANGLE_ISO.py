@@ -1,7 +1,6 @@
-import re
 import pya
-
 from Lib_STL        import STL
+from Lib_MISC       import MISC
 
 class TRIANGLE_ISO(pya.PCellDeclarationHelper):
     def __init__(self):
@@ -23,7 +22,7 @@ class TRIANGLE_ISO(pya.PCellDeclarationHelper):
 
         self.param("rounding",     self.TypeDouble,  "Rounding",           unit =  "um",  default =    0)
         self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",  default =   32)
-        
+        self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",   default =    0)
         _ = [ self.d_option.add_choice(k,v) for k, v in self.dimension_option_dict.items()]
          
     def display_text_impl(self):
@@ -32,28 +31,11 @@ class TRIANGLE_ISO(pya.PCellDeclarationHelper):
         param_name  = f""
         
         return "_".join([ n for n in [custom_name, class_name, param_name] if n ])
-    
-    def float_coerce(self, in_val, min_val = 0, max_val = 1E5, default_val = 0):
-        reg_str = "^([-]?[0-9]+[.]?[0-9]*)$"
-        match   = re.findall(reg_str, in_val)
-        result  = default_val
-        
-        if not(len(match) > 0):
-            return result
-        try:
-            result = float(match[0])
-            result = sorted([min_val, result, max_val])[1]
-            
-        except:
-            result  = default_val
-            
-        return result
-
 
     def coerce_parameters_impl(self):      
-        self.size_w_float  = self.float_coerce(self.size_w,  0, 1E5,   10)
-        self.size_h_float  = self.float_coerce(self.size_h,  0, 1E5,   30)
-        self.prime_a_float = self.float_coerce(self.prime_a, 0, 179.9, 30)
+        self.size_w_float  = MISC.s_coerce(self.size_w,  0,        default_val =  0)
+        self.size_h_float  = MISC.s_coerce(self.size_h,  0,        default_val = 30)
+        self.prime_a_float = MISC.s_coerce(self.prime_a, 0, 179.9, default_val = 30)
 
         if self.dimension_option == 0 : #"By Height and Width"
             self.size_w  = str(self.size_w_float)
@@ -120,5 +102,7 @@ class TRIANGLE_ISO(pya.PCellDeclarationHelper):
         if self.rounding:
             poly = poly.round_corners(self.rounding, self.rounding, self.points)
             
-        self.cell.shapes(self.main_layer).insert(poly)
+        obj = MISC.bias(poly, self.bias, self.layout.dbu)
+            
+        self.cell.shapes(self.main_layer).insert(obj)
 

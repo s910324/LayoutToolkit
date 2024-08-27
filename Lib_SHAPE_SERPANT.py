@@ -1,6 +1,6 @@
 import pya
-
 from Lib_STL        import STL
+from Lib_MISC       import MISC
 
 class SERPANT(pya.PCellDeclarationHelper):
     def __init__(self):
@@ -31,7 +31,7 @@ class SERPANT(pya.PCellDeclarationHelper):
 
         self.param("jog_r",        self.TypeDouble,  "Jog Rounding",        unit =  "um",   default =  0)
         self.param("points",       self.TypeInt,     "Round Points",        unit = "pts",   default = 32)
-        
+        self.param("bias",         self.TypeDouble,  "Shape Bias",          unit =  "um",   default =  0)
         self.e_option = self.param("end_option",        self.TypeString,  "Line End Options",      default = 0)
         
         _ = [ self.o_option.add_choice(k,v) for k, v in self.orentation_option_dict.items()]
@@ -46,16 +46,15 @@ class SERPANT(pya.PCellDeclarationHelper):
     
         
     def coerce_parameters_impl(self):         
-        self.line_w     = 0   if self.line_w     <= 0   else self.line_w     
-        self.line_s     = 0   if self.line_s     <= 0   else self.line_s
+        self.line_w     = MISC.f_coerce(self.line_w,    0)  
+        self.line_s     = MISC.f_coerce(self.line_s,    0)  
+        self.jog_l      = MISC.f_coerce(self.jog_l,     0)  
+        self.start_ext  = MISC.f_coerce(self.start_ext, 0)  
+        self.stop_ext   = MISC.f_coerce(self.stop_ext,  0)  
+        self.jog_r      = MISC.f_coerce(self.jog_r,     0)  
+        self.points     = MISC.f_coerce(self.points,    4)   
         
-        self.jog_l      = 0   if self.jog_l      <= 0   else self.jog_l
-        self.jog_t      = 0.5 if self.jog_t      <= 0.5 else int (self.jog_t / 0.5) * 0.5
-        self.start_ext  = 0   if self.start_ext  <= 0   else self.start_ext
-        self.stop_ext   = 0   if self.stop_ext   <= 0   else self.stop_ext
-
-        self.jog_r      = 0   if self.jog_r      <= 0   else self.jog_r
-        self.points     = 4   if self.points     <= 4   else self.points 
+        self.jog_t      = MISC.f_coerce(self.jog_t,  0.5, step = 0.5)
 
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -87,17 +86,18 @@ class SERPANT(pya.PCellDeclarationHelper):
         else:
             points[ 0] = points[ 0] - pya.DVector( self.start_ext, 0) 
             points[-1] = points[-1] + pya.DVector( self.stop_ext,  0) * {0 :-1, 1 :  1}[half_turns % 2]
-            
-        path = pya.DPath(points, self.line_w)
+        
+        biased_w = self.line_w + self.bias
+        path = pya.DPath(points, biased_w)
         
         if self.jog_r:
             path = path.round_corners(self.jog_r, self.points, self.layout.dbu)
         
         if self.end_option == 1 :
             path.round   = True
-            path.bgn_ext = self.line_w/2
-            path.end_ext = self.line_w/2
-            
+            path.bgn_ext = biased_w/2
+            path.end_ext = biased_w/2
+
         self.cell.shapes(self.main_layer).insert(path)
 
         
