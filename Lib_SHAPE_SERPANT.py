@@ -9,6 +9,11 @@ class SERPANT(pya.PCellDeclarationHelper):
             "Verticle"   : 0, 
             "Horizontal" : 1, 
         }
+        
+        self.end_option_dict  = {
+            "Flat"     : 0, 
+            "Rounded"  : 1, 
+        }
 
         
         self.param("name",         self.TypeString,  "Name",                               default =   "")
@@ -20,14 +25,17 @@ class SERPANT(pya.PCellDeclarationHelper):
         self.param("line_s",       self.TypeDouble,  "Line Space",          unit =  "um",   default =  2)
                 
         self.param("jog_l",        self.TypeDouble,  "Jog Length",          unit =  "um",   default =  50)
-        self.param("jog_t",        self.TypeDouble,  "Jog Turns (min 0.5)", unit =  "turn", default =  5)
+        self.param("jog_t",        self.TypeDouble,  "Jog Turns (min 0.5)", unit =  "turns",default =  5)
         self.param("start_ext",    self.TypeDouble,  "Start Extend",        unit =  "um",   default =  5)
         self.param("stop_ext",     self.TypeDouble,  "End Extend",          unit =  "um",   default =  5)
 
         self.param("jog_r",        self.TypeDouble,  "Jog Rounding",        unit =  "um",   default =  0)
         self.param("points",       self.TypeInt,     "Round Points",        unit = "pts",   default = 32)
-
+        
+        self.e_option = self.param("end_option",        self.TypeString,  "Line End Options",      default = 0)
+        
         _ = [ self.o_option.add_choice(k,v) for k, v in self.orentation_option_dict.items()]
+        _ = [ self.e_option.add_choice(k,v) for k, v in self.end_option_dict.items()]
 
     def display_text_impl(self):
         class_name  = self.__class__.__name__
@@ -38,16 +46,16 @@ class SERPANT(pya.PCellDeclarationHelper):
     
         
     def coerce_parameters_impl(self):         
-        self.line_w     = 0 if self.line_w     <= 0 else self.line_w     
-        self.line_s     = 0 if self.line_s     <= 0 else self.line_s
+        self.line_w     = 0   if self.line_w     <= 0   else self.line_w     
+        self.line_s     = 0   if self.line_s     <= 0   else self.line_s
         
-        self.jog_l      = 0 if self.jog_l      <= 0 else self.jog_l
-        self.jog_t      = 0 if self.jog_t      <= 0 else int (self.jog_t / 0.5) * 0.5
-        self.start_ext  = 0 if self.start_ext  <= 0 else self.start_ext
-        self.stop_ext   = 0 if self.stop_ext   <= 0 else self.stop_ext
+        self.jog_l      = 0   if self.jog_l      <= 0   else self.jog_l
+        self.jog_t      = 0.5 if self.jog_t      <= 0.5 else int (self.jog_t / 0.5) * 0.5
+        self.start_ext  = 0   if self.start_ext  <= 0   else self.start_ext
+        self.stop_ext   = 0   if self.stop_ext   <= 0   else self.stop_ext
 
-        self.jog_r      = 0 if self.jog_r      <= 0 else self.jog_r
-        self.points    =  4 if self.points     <= 4 else self.points 
+        self.jog_r      = 0   if self.jog_r      <= 0   else self.jog_r
+        self.points     = 4   if self.points     <= 4   else self.points 
 
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -67,8 +75,8 @@ class SERPANT(pya.PCellDeclarationHelper):
         for half_turn in range(half_turns):
             sign_0, sign_1 = (-1,  1) if half_turn % 2 == 0 else ( 1, -1)
             points += [
-                pya.DPoint(sign_0 * half_jog, ((half_turns/2) - half_turn) * pitch),
-                pya.DPoint(sign_1 * half_jog, ((half_turns/2) - half_turn) * pitch)
+                pya.DPoint(sign_0 * half_jog, ((half_turns/2) - half_turn - 0.5) * pitch),
+                pya.DPoint(sign_1 * half_jog, ((half_turns/2) - half_turn - 0.5) * pitch)
             ]
                 
         if (self.orentation_option == 0):
@@ -85,11 +93,11 @@ class SERPANT(pya.PCellDeclarationHelper):
         if self.jog_r:
             path = path.round_corners(self.jog_r, self.points, self.layout.dbu)
         
-        
-        path.round   = True
-        path.	bgn_ext = self.line_w/2
-        path.end_ext = self.line_w/2
-        
+        if self.end_option == 1 :
+            path.round   = True
+            path.bgn_ext = self.line_w/2
+            path.end_ext = self.line_w/2
+            
         self.cell.shapes(self.main_layer).insert(path)
 
         

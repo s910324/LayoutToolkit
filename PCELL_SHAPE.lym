@@ -35,6 +35,9 @@ import Lib_SHAPE_POLYGON
 import Lib_SHAPE_RECT
 import Lib_SHAPE_RECTRING
 import Lib_SHAPE_SERPANT
+import Lib_SHAPE_CIRCLERECT
+import Lib_SHAPE_TRIANGLE
+import Lib_SHAPE_TRIANGLE_ISO
 
 def rld():
     from   importlib import reload 
@@ -47,29 +50,38 @@ def rld():
     reload(Lib_SHAPE_RECT)
     reload(Lib_SHAPE_RECTRING)
     reload(Lib_SHAPE_SERPANT)
+    reload(Lib_SHAPE_CIRCLERECT)
+    reload(Lib_SHAPE_TRIANGLE)
+    reload(Lib_SHAPE_TRIANGLE_ISO)
 rld()
 
-from Lib_STL            import STL
-from Lib_SHAPE_PIE      import PIE
-from Lib_SHAPE_ARC      import ARC
-from Lib_SHAPE_CIRCLE   import CIRCLE
-from Lib_SHAPE_RING     import RING
-from Lib_SHAPE_POLYGON  import POLYGON
-from Lib_SHAPE_RECT     import RECT
-from Lib_SHAPE_RECTRING import RECTRING
-from Lib_SHAPE_SERPANT  import SERPANT
+from Lib_STL                import STL
+from Lib_SHAPE_PIE          import PIE
+from Lib_SHAPE_ARC          import ARC
+from Lib_SHAPE_CIRCLE       import CIRCLE
+from Lib_SHAPE_RING         import RING
+from Lib_SHAPE_POLYGON      import POLYGON
+from Lib_SHAPE_RECT         import RECT
+from Lib_SHAPE_RECTRING     import RECTRING
+from Lib_SHAPE_SERPANT      import SERPANT
+from Lib_SHAPE_CIRCLERECT   import CIRCLERECT
+from Lib_SHAPE_TRIANGLE     import TRIANGLE
+from Lib_SHAPE_TRIANGLE_ISO import TRIANGLE_ISO
 
 class SHAPE(pya.Library):
   def __init__(self):
     self.description = "SHAPE"
-    self.layout().register_pcell("PIE",           PIE())
-    self.layout().register_pcell("ARC",           ARC())
-    self.layout().register_pcell("CIRCLE",     CIRCLE())
-    self.layout().register_pcell("RING",         RING())
-    self.layout().register_pcell("POLYGON",   POLYGON())
-    self.layout().register_pcell("RECT",         RECT())
-    self.layout().register_pcell("RECTRING", RECTRING())
-    self.layout().register_pcell("SERPANT",   SERPANT())
+    self.layout().register_pcell("PIE",                   PIE())
+    self.layout().register_pcell("ARC",                   ARC())
+    self.layout().register_pcell("CIRCLE",             CIRCLE())
+    self.layout().register_pcell("RING",                 RING())
+    self.layout().register_pcell("POLYGON",           POLYGON())
+    self.layout().register_pcell("RECT",                 RECT())
+    self.layout().register_pcell("RECTRING",         RECTRING())
+    self.layout().register_pcell("SERPANT",           SERPANT())
+    self.layout().register_pcell("CIRCLERECT",     CIRCLERECT())
+    self.layout().register_pcell("TRIANGLE",         TRIANGLE())
+    self.layout().register_pcell("TRIANGLE_ISO", TRIANGLE_ISO())
     self.register("SHAPE")
 
 SHAPE()

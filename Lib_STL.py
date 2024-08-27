@@ -58,7 +58,7 @@ class STL(object):
     
     def triangle(x, y, d1, d2, deg1 = 0, deg2 = 90):
         pts = [
-            pya.DPoint(                           x,                            y), 
+            pya.DPoint(                       x,                       y), 
             pya.DPoint((x + d1 * STL.cos(deg1)), (y + d1 * STL.sin(deg1))),
             pya.DPoint((x + d2 * STL.cos(deg2)), (y + d2 * STL.sin(deg2)))
         ]
