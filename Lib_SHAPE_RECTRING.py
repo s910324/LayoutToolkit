@@ -75,7 +75,7 @@ class RECTRING(pya.PCellDeclarationHelper):
         in_box  = None
         out_box = None
         hw, hh  = self.size_w/2, self.size_h/2
-        print(self.geometry_option)
+
         #by inside
         if (self.geometry_option == 0) : 
             in_p1  = pya.DPoint( -hw, -hh) 
@@ -126,39 +126,34 @@ class RECTRING(pya.PCellDeclarationHelper):
         return in_box, out_box
     
     def box_modifier(self, box, modify):
-        print("X3")
+        x, y = box.center().x, box.center().y
         box_param = [
-            self.name, 0, 
+            self.name, self.main, 
             4, self.modify_option, 
             box.width(), box.height(),
             modify, modify, modify, modify, 
             0, self.points
         ]
-        print("X3.5")
-        box_pcell = STL.pcell(self.layout, "SHAPE", "RECT", 0, 0, 0, box_param, pya.Vector(0, 0), pya.Vector(0, 0), 0, 0)
-        print("X3.8", self.main_layer)
-        box_shape = list(box_pcell.cell.flatten(True).each_shape(0))[0]
-        print("X4", box_shape)
-        box_poly  = box_shape.dpolygon
-        print("X4", box_poly)
-        return box_poly
         
-    def ring_modifier(self):
-        print("X5")
-        in_box, out_box =  self.gen_box()
-        print("X5.5")
-        in_reg  = pya.Region(self.box_modifier( in_box,  self.modify_in))
-        print("X1")
-        out_reg = pya.Region(self.box_modifier(out_box, self.modify_out))
-        print("X6")
-        poly    = list((out_reg - in_reg).each_merged())[0]
-        print("X7")
+        box_pcell = STL.pcell(self.layout, "SHAPE", "RECT", x, y, 0, box_param, pya.Vector(0, 0), pya.Vector(0, 0), 0, 0)
+        inst      = self.cell.insert(box_pcell)
+        shape     = list(self.cell.flatten(True).each_shape(0))[0]
+        poly      = shape.polygon
+        print("BBOX IN", x, y)
+        print("BBOX POLY", poly.bbox().center())
+        print("----")
+        self.cell.clear(0)
         return poly
         
+    def ring_modifier(self):
+        in_box, out_box =  self.gen_box()
+        poly_in  = self.box_modifier( in_box,  self.modify_in)
+        poly_out = self.box_modifier(out_box, self.modify_out)
+        ring_reg = pya.Region(poly_out) - pya.Region(poly_in)
+        return list(ring_reg.each_merged())[0]
+        
     def produce_impl(self):
-        print("X1")
         poly = self.ring_modifier()
-        print("X2")
         self.cell.shapes(self.main_layer).insert(poly)
 
         
