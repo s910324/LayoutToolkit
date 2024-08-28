@@ -28,8 +28,6 @@ if not importPath in sys.path:
 
 import Lib_STL
 import Lib_MISC
-import Lib_FIDUCIAL_CROSS
-import Lib_FIDUCIAL_FMARK
 import Lib_FIDUCIAL_ASML_PM
 import Lib_FIDUCIAL_GENERAL
 
@@ -37,24 +35,20 @@ def rld():
     from   importlib import reload 
     reload(Lib_STL)
     reload(Lib_MISC)
-    reload(Lib_FIDUCIAL_CROSS)
-    reload(Lib_FIDUCIAL_FMARK)
+
     reload(Lib_FIDUCIAL_ASML_PM)
     reload(Lib_FIDUCIAL_GENERAL)
 rld()
 
 from Lib_STL                import STL
 from Lib_MISC               import MISC
-from Lib_FIDUCIAL_CROSS     import CROSS
-from Lib_FIDUCIAL_FMARK     import FMARK
+
 from Lib_FIDUCIAL_ASML_PM   import ASML_PM   
 from Lib_FIDUCIAL_GENERAL   import GENERAL
 
 class FIDUCIAL(pya.Library):
   def __init__(self):
     self.description = "FIDUCIAL"
-    self.layout().register_pcell("CROSS",               CROSS())
-    self.layout().register_pcell("FMARK",               FMARK())
     self.layout().register_pcell("ASML_PM",           ASML_PM())
     self.layout().register_pcell("GENERAL",           GENERAL())
     self.register("FIDUCIAL")

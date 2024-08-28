@@ -96,6 +96,29 @@ class STL(object):
             pya.DPoint(x2, y1), pya.DPoint(x2, y0), pya.DPoint(x1, y0), pya.DPoint(x1, y1), 
         ]
         
+    def box_ring(x, y, size, linewidth):
+        x0 = x-(size/2)
+        x1 = x-(size/2) + linewidth
+        x2 = x+(size/2) - linewidth
+        x3 = x+(size/2)
+        y0 = y-(size/2)
+        y1 = y-(size/2) + linewidth
+        y2 = y+(size/2) - linewidth
+        y3 = y+(size/2)
+        
+        return [
+            pya.DPoint(x0, y0), 
+            pya.DPoint(x0, y1), 
+            pya.DPoint(x2, y1), 
+            pya.DPoint(x2, y2), 
+            pya.DPoint(x1, y2), 
+            pya.DPoint(x1, y1), 
+            pya.DPoint(x0, y1), 
+            pya.DPoint(x0, y3), 
+            pya.DPoint(x3, y3), 
+            pya.DPoint(x3, y0),
+        ]
+         
     def fpoints(x, y, size, linewidth):
         w       = size * 0.7
         h       = size
@@ -111,7 +134,88 @@ class STL(object):
             pya.DPoint(x1, y3), pya.DPoint(x1, y2), pya.DPoint(x2, y2), pya.DPoint(x2, y1), 
             pya.DPoint(x1, y1), pya.DPoint(x1, y0), 
         ]
-               
+        
+    def ipoints(x, y, size, linewidth):
+        x0 = x-(linewidth/2)
+        x1 = x+(linewidth/2)
+        y0 = y-(linewidth/2)
+        y1 = y+(size/2)
+        
+        return [
+            pya.DPoint(x0, y0), 
+            pya.DPoint(x0, y1), 
+            pya.DPoint(x1, y1), 
+            pya.DPoint(x1, y0), 
+        ]
+          
+    def lpoints(x, y, size, linewidth):
+        x0 = x-(linewidth/2)
+        x1 = x+(linewidth/2)
+        x2 = x+(size/2)
+        y0 = y-(linewidth/2)
+        y1 = y+(linewidth/2)
+        y2 = y+(size/2)
+        
+        return [
+            pya.DPoint(x0, y0), 
+            pya.DPoint(x0, y2), 
+            pya.DPoint(x1, y2), 
+            pya.DPoint(x1, y1), 
+            pya.DPoint(x2, y1), 
+            pya.DPoint(x2, y0), 
+        ]
+        
+    def tpoints(x, y, size, linewidth):
+        x0 = x-(size/2)
+        x1 = x-linewidth/2
+        x2 = x+linewidth/2
+        x3 = x+(size/2)
+        y0 = y-(size/2)
+        y1 = y-linewidth/2
+        y2 = y+linewidth/2
+        y3 = y+(size/2)
+        
+        return [
+            pya.DPoint(x0, y1), 
+            pya.DPoint(x0, y2), 
+            pya.DPoint(x1, y2), 
+            pya.DPoint(x1, y3), 
+            pya.DPoint(x2, y3), 
+            pya.DPoint(x2, y2), 
+            pya.DPoint(x3, y2), 
+            pya.DPoint(x3, y1), 
+        ]
+        
+    def dovetail_points(x, y, size, linewidth):
+        x0 = x-(size/2)
+        x1 = x-linewidth/2
+        x2 = x+linewidth/2
+        x3 = x+(size/2)
+        y0 = y-(size/2)
+        y1 = y-linewidth/2
+        y2 = y+linewidth/2
+        y3 = y+(size/2)
+        rs = (size - linewidth)/2 
+        
+        return [
+            pya.DPoint(x0, y1), 
+            pya.DPoint(-rs, 0), 
+            pya.DPoint(x0, y2), 
+            pya.DPoint(x1, y2), 
+            pya.DPoint(x1, y3), 
+            pya.DPoint( 0, rs), 
+            pya.DPoint(x2, y3), 
+            pya.DPoint(x2, y2), 
+            pya.DPoint(x3, y2), 
+            pya.DPoint(rs,  0), 
+            pya.DPoint(x3, y1), 
+            pya.DPoint(x2, y1), 
+            pya.DPoint(x2, y0),
+            pya.DPoint( 0,-rs),
+            pya.DPoint(x1, y0), 
+            pya.DPoint(x1, y1), 
+        ]
+        
     def wafer(x, y, inch, p = 128):
         mm              = 1000 
         wafer_diameter  = 0

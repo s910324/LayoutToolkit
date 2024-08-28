@@ -27,20 +27,38 @@ class MISC(object):
             result  = default_val
             
         return result
+    
+    def to_region(obj, unit):
+        if isinstance(obj, pya.DPolygon):
+            return pya.Region(obj.to_itype(unit))
+            
+        if isinstance(obj, pya.DBox):
+            return pya.Region(pya.DPolygon(obj).to_itype(unit))
+            
+        if isinstance(obj, pya.Region):
+            return obj
+            
+    def invert(obj, base, flag, unit):
 
+        if not(flag):
+            return obj
+            
+        return MISC.to_region(base, unit) - MISC.to_region(obj, unit)
+
+            
     def bias(obj, bias, unit):
         bias = bias/unit
         
         if (bias == 0):
             return obj
-        
-        if isinstance(obj, pya.DPolygon):
-            return pya.Region(obj.to_itype(unit)).sized(bias)
             
-        if isinstance(obj, pya.DBox):
-            return pya.Region(pya.DPolygon(obj).to_itype(unit)).sized(bias)
+        return MISC.to_region(obj, unit).sized(bias)
+
             
-        if isinstance(obj, pya.Region):
-            return obj.sized(bias)
-            
-        
+    def rounded(obj, round_in, round_out, points, unit):
+        round_in  = round_in/unit
+        round_out = round_out/unit
+        if (round_out == 0) and (round_out == 0):
+            return obj
+           
+        return MISC.to_region(obj, unit).rounded_corners(round_in, round_out, points)
