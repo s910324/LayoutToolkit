@@ -110,7 +110,7 @@ class RECT(pya.PCellDeclarationHelper):
         ] if m ]
                
         if modifers:
-            box_r    = pya.Region(pya.DPolygon(poly).to_itype(unit))
+            box_r    = pya.Region(poly.to_itype(unit))
             mpoly_r  = pya.Region(modifers)
             result_r = (box_r - mpoly_r)
             ipoly    = list(result_r.each_merged())[0]
@@ -138,7 +138,7 @@ class RECT(pya.PCellDeclarationHelper):
         return poly.transformed(pya.DTrans(move))
         
     def produce_impl(self):  
-        poly = pya.DBox(self.size_w, self.size_h) 
+        poly = pya.DPolygon(pya.DBox(self.size_w, self.size_h)) 
         poly = self.modify_all(poly)
         poly = self.moveCenter(poly)
         

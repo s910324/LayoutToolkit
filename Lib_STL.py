@@ -163,3 +163,10 @@ class STL(object):
         pcell_decl = lib.layout().pcell_declaration(pcell_name)
         pcell_var  = layout.add_pcell_variant(lib, pcell_decl.id(), pcell_parameters) 
         return pya.CellInstArray(pcell_var, pya.DCplxTrans (1.0, angle, False, x, y ), va, vb, na, nb)
+        
+    def box_array( cx, cy, w, h, px, py, nx, ny):
+        result = []
+        for ix in range(nx):
+            for iy in range(ny):
+                result.append(pya.DPolygon(pya.DBox(w, h).moved(cx + px * ix, cy + py * iy)))
+        return result
