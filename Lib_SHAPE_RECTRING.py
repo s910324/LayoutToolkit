@@ -126,6 +126,10 @@ class RECTRING(pya.PCellDeclarationHelper):
         return in_box, out_box
     
     def box_modifier(self, box, modify):
+        
+        if 0 in [box.width(), box.height()]:
+            return pya.DPolygon()
+            
         x, y = box.center().x, box.center().y
         box_param = [
             self.name, self.main, 
@@ -134,31 +138,41 @@ class RECTRING(pya.PCellDeclarationHelper):
             modify, modify, modify, modify, 
             0, self.points
         ]
-        
-        box_pcell = STL.pcell(self.layout, "SHAPE", "RECT", 0, 0, 0, box_param, pya.Vector(0, 0), pya.Vector(0, 0), 0, 0)
-        inst      = self.cell.insert(box_pcell)
-        shape     = list(self.cell.flatten(True).each_shape(0))[0]
-        poly      = shape.	dpolygon.transformed(pya.DTrans(x, y))
-        self.cell.clear(0)
+
+        box_pcell  = STL.pcell(self.layout, "SHAPE", "RECT", 0, 0, 0, box_param, pya.Vector(0, 0), pya.Vector(0, 0), 0, 0)
+        pcell_poly = MISC.pcell_to_poly(self.layout, box_pcell)        
+        poly       = pcell_poly.transformed(pya.DTrans(x, y))
         return poly
         
     def ring_modifier(self):
         unit = self.layout.dbu
         in_box, out_box =  self.gen_box()
+        margin_l = out_box.left   - in_box.left
+        margin_t = out_box.top    - in_box.top
+        margin_r = out_box.right  - in_box.right
+        margin_b = out_box.bottom - in_box.bottom
+        '''       
+        self.modify_out = min([
+            min([margin_l, margin_t]),
+            min([margin_l, margin_b]),
+            min([margin_r, margin_t]),
+            min([margin_r, margin_b]),
+            self.modify_out,
+        ])
+        '''
         poly_in  = self.box_modifier( in_box,  self.modify_in)
-        poly_out = self.box_modifier(out_box, self.modify_out)
+        poly_out = self.box_modifier(out_box, self.modify_out)        
         ring_reg = pya.Region(poly_out.to_itype(unit)) - pya.Region(poly_in.to_itype(unit))
         
         if self.rounding:
             ring_reg.round_corners(self.rounding/unit, self.rounding/unit, self.points)
-            
+        
         return ring_reg
         
     def produce_impl(self):
         unit     = self.layout.dbu
         ring_reg = self.ring_modifier()
         obj      = MISC.bias(ring_reg, self.bias, self.layout.dbu)
-            
         self.cell.shapes(self.main_layer).insert(obj)
 
         

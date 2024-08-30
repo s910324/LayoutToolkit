@@ -38,6 +38,21 @@ class MISC(object):
         if isinstance(obj, pya.Region):
             return obj
             
+    def pcell_to_poly(layout, pcell):
+        cell = layout.create_cell("pcell_to_poly")
+        inst = cell.insert(pcell)
+        cell.flatten(True)
+        
+        if cell.is_empty():
+            return None
+
+        shapes = []
+        _      = [shapes.extend(list(cell.each_shape(i))) for i in cell.layout().layer_indexes()]
+        poly   = shapes[0].dpolygon
+        cell.delete()
+        return poly
+            
+            
     def invert(obj, base, flag, unit):
 
         if not(flag):
