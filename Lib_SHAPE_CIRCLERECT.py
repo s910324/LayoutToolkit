@@ -46,6 +46,7 @@ class CIRCLERECT(pya.PCellDeclarationHelper):
         self.param("circle_y",     self.TypeDouble,  "Circle Origin Y",    unit =  "um",  default =    0)
         self.param("points",       self.TypeInt,     "Circle Points",      unit = "pts",  default =   32)
         self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",   default =    0)
+        self.param("rounding",     self.TypeDouble,  "Rounding",           unit =  "um",   default =    0)
         
         _ = [ self.c_option.add_choice(k,v) for k, v in self.center_option_dict.items()]
         _ = [ self.b_option.add_choice(k,v) for k, v in self.bool_option_dict.items()]
@@ -59,10 +60,11 @@ class CIRCLERECT(pya.PCellDeclarationHelper):
         return "_".join([ n for n in [custom_name, class_name, param_name] if n ])
 
     def coerce_parameters_impl(self):         
-        self.size_w = MISC.f_coerce(self.size_w,  0)
-        self.size_h = MISC.f_coerce(self.size_h,  0)
-        self.size_r = MISC.f_coerce(self.size_r,  0)
-        self.points = MISC.f_coerce(self.points,  4)
+        self.size_w   = MISC.f_coerce(self.size_w,   0)
+        self.size_h   = MISC.f_coerce(self.size_h,   0)
+        self.size_r   = MISC.f_coerce(self.size_r,   0)
+        self.points   = MISC.f_coerce(self.points,   4)
+        self.rounding = MISC.f_coerce(self.rounding, 0)
 
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -107,9 +109,10 @@ class CIRCLERECT(pya.PCellDeclarationHelper):
         elif self.bool_option == 3 : # "Circle or  Rect"   
             result = rect_r + cir_r
         elif self.bool_option == 4 : # "Circle diff Rect" 
-            result = rect_r ^ cir_r 
-
-        obj = MISC.bias(result, self.bias, self.layout.dbu)
+            result = rect_r ^ cir_r
+            
+        obj = MISC.rounded(result, self.rounding, self.rounding, self.points, self.layout.dbu)
+        obj = MISC.bias(obj, self.bias, self.layout.dbu)
             
         self.cell.shapes(self.main_layer).insert(obj)
 
