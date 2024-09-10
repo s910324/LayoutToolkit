@@ -297,9 +297,9 @@ class WaferMap(pya.PCellDeclarationHelper):
         self.shot_w             = MISC.f_coerce(self.shot_w,       5000)
         self.shot_h             = MISC.f_coerce(self.shot_h,       5000)
         self.chip_w             = MISC.f_coerce(self.chip_w,       1000)
-        self.chip_h             = MISC.f_coerce(self.chip_w,       1000)
+        self.chip_h             = MISC.f_coerce(self.chip_h,       1000)
         self.scribe_w           = MISC.f_coerce(self.scribe_w,        0)
-        self.scribe_h           = MISC.f_coerce(self.scribe_w,        0)
+        self.scribe_h           = MISC.f_coerce(self.scribe_h,        0)
         self.skip_chip_cnt      = MISC.f_coerce(self.skip_chip_cnt,   0)
         self.skip_teg_cnt       = MISC.f_coerce(self.skip_teg_cnt,    0)
         self.inch               = list(self.wafer_size_dict.keys())[list(self.wafer_size_dict.values()).index( self.wafer_size_option)]
