@@ -1,0 +1,1098 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>true</autorun>
+ <autorun-early>false</autorun-early>
+ <priority>0</priority>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>import pya
+
+class BoxAlign(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(BoxAlign, self).__init__()
+        self.param("l1",           self.TypeLayer,    "Layer inner box",      default = pya.LayerInfo(1, 0))
+        self.param("l2",           self.TypeLayer,    "Layer outter box",     default = pya.LayerInfo(1, 0))
+
+        self.param("s1",           self.TypeDouble,   "Box inner size",       default = 150) 
+        self.param("s2",           self.TypeDouble,   "Box outter size",      default = 230)
+        self.param("space",        self.TypeDouble,   "Spacing",              default =  20) 
+
+    def display_text_impl(self):
+        return "BoxAlign"
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+    
+    def coerce_parameters_impl(self):
+        self.s1     = max(self.s1,     self.layout.dbu * 2)
+        self.s2     = max(self.s2,     self.layout.dbu * 2)
+        self.space  = max(self.space,  self.layout.dbu * 2)
+    
+    def produce_impl(self):
+        box  = pya.DBox(self.s1, self.s1)
+        ringW      = (self.s2 - self.s1 - 2 * self.space) / 2
+        ring_half  = self.s2/2
+        ring_inner = ring_half - ringW
+        ring = pya.DPolygon([
+            pya.DPoint( - ring_half,  - ring_half), 
+            pya.DPoint( - ring_half,  + ring_inner), 
+            pya.DPoint( - ring_inner, + ring_inner), 
+            pya.DPoint( - ring_inner, - ring_inner),   
+            pya.DPoint( + ring_inner, - ring_inner),
+            pya.DPoint( + ring_inner, + ring_inner),            
+            pya.DPoint( - ring_half,  + ring_inner),            
+            pya.DPoint( - ring_half,  + ring_half),     
+            pya.DPoint( + ring_half,  + ring_half),     
+            pya.DPoint( + ring_half,  - ring_half),   
+            pya.DPoint( - ring_half,  - ring_half), 
+        ])
+        self.cell.shapes(self.l1_layer).insert(box)
+        self.cell.shapes(self.l2_layer).insert(ring)
+        
+class BoxSegAlign(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(BoxSegAlign, self).__init__()
+        self.param("lb",           self.TypeLayer,    "Layer base",                 default = pya.LayerInfo(1, 0))
+        self.param("l1",           self.TypeLayer,    "Layer inner box",            default = pya.LayerInfo(1, 0))
+        self.param("l2",           self.TypeLayer,    "Layer outter box",           default = pya.LayerInfo(1, 0))
+        
+        self.param("sb",           self.TypeDouble,   "Base size",                  default = 32)
+
+        self.param("s1",           self.TypeDouble,   "Box inner size",             default = 12) 
+        self.param("w1",           self.TypeDouble,   "Box inner width",            default =  2) 
+        self.param("h1",           self.TypeDouble,   "Box inner segment length",   default =  6) 
+        self.param("l1R",          self.TypeBoolean,  "Box inner invert",           default = False)
+        
+        self.param("s2",           self.TypeDouble,   "Box outter size",            default = 22)
+        self.param("w2",           self.TypeDouble,   "Box outter width",           default =  2) 
+        self.param("h2",           self.TypeDouble,   "Box outter segment length",  default = 12)
+        self.param("l2R",          self.TypeBoolean,  "Box outter invert",          default = False)
+        
+    def display_text_impl(self):
+        return "BoxSegAlign"
+        
+    def can_cre9ate_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+    
+    def coerce_parameters_impl(self):
+        self.sb     = max(self.sb,     self.layout.dbu * 2)
+        self.s1     = max(self.s1,     self.layout.dbu * 2)
+        self.w1     = max(self.w1,     self.layout.dbu * 2)
+        self.h1     = max(self.h1,     self.layout.dbu * 2)
+        
+        self.s2     = max(self.s2,     self.layout.dbu * 2)
+        self.w2     = max(self.w2,     self.layout.dbu * 2)
+        self.h2     = max(self.h2,     self.layout.dbu * 2)
+    
+    def produce_impl(self):
+        unit    = self.layout.dbu
+
+        seg1V   = pya.DBox(self.w1, self.h1)
+        seg1H   = pya.DBox(self.h1, self.w1)
+        seg2V   = pya.DBox(self.w2, self.h2)
+        seg2H   = pya.DBox(self.h2, self.w2)
+        
+        d1      = (self.s1 - self.w1)/2
+        d2      = (self.s2 - self.w2)/2
+
+
+        seg1array = [
+            seg1V.dup().move(-d1, 0).to_itype(unit),
+            seg1V.dup().move( d1, 0).to_itype(unit),
+            seg1H.dup().move(0, -d1).to_itype(unit),
+            seg1H.dup().move(0,  d1).to_itype(unit)
+        ]
+        
+        seg2array = [
+                seg2V.dup().move(-d2, 0).to_itype(unit),
+                seg2V.dup().move( d2, 0).to_itype(unit),
+                seg2H.dup().move(0, -d2).to_itype(unit),
+                seg2H.dup().move(0,  d2).to_itype(unit)
+        ]
+        
+        region0 = pya.Region(pya.DBox(self.sb, self.sb).to_itype(unit))
+        region1 = pya.Region()
+        region2 = pya.Region()
+        
+        for b in seg1array : region1.insert(b)
+        for b in seg2array : region2.insert(b)
+        
+        region1 = (region0 - region1) if self.l1R else region1
+        region2 = (region0 - region2) if self.l2R else region2
+        
+        self.cell.shapes(self.lb_layer).insert(region0)
+        self.cell.shapes(self.l1_layer).insert(region1)
+        self.cell.shapes(self.l2_layer).insert(region2)
+        
+class ASML_PM(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(ASML_PM, self).__init__()
+        self.param("base",        self.TypeLayer,    "Base Layer",         default = pya.LayerInfo(0, 0))
+        self.param("l",           self.TypeLayer,    "Pattern Layer",      default = pya.LayerInfo(1, 0))
+        self.param("clrSize",     self.TypeDouble,    "Clear our size",     default =  610,   unit = "um") 
+        self.param("lR",          self.TypeBoolean,  "Pattern invert",     default = False)
+
+    def display_text_impl(self):
+        return "ASML_PM"
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+    
+    def coerce_parameters_impl(self):
+        self.clrSize  = max(self.clrSize,  610)
+        
+    def boxMarks(self, cx, cy, w, h, px, py, nx, ny):
+        result = []
+        for ix in range(nx):
+            for iy in range(ny):
+                result.append(pya.DPolygon(pya.DBox(w, h).moved(cx + px * ix, cy + py * iy)))
+        return result
+        
+    def crossMark(self, size, linewidth):
+            x0 = -(size/2)
+            x1 = -linewidth/2
+            x2 =  linewidth/2
+            x3 =  (size/2)
+            y0 = x0
+            y1 = x1
+            y2 = x2
+            y3 = x3
+            
+            return pya.DPolygon([
+                pya.DPoint(x0, y1), 
+                pya.DPoint(x0, y2), 
+                pya.DPoint(x1, y2), 
+                pya.DPoint(x1, y3), 
+                pya.DPoint(x2, y3), 
+                pya.DPoint(x2, y2), 
+                pya.DPoint(x3, y2), 
+                pya.DPoint(x3, y1), 
+                pya.DPoint(x2, y1), 
+                pya.DPoint(x2, y0),
+                pya.DPoint(x1, y0), 
+                pya.DPoint(x1, y1), 
+            ])
+        
+    def produce_impl(self):
+        dx, dy         = -2.5, -2.5
+        baseSize       = self.clrSize
+        unit           = self.layout.dbu
+        regionBase     = pya.Region()
+        regionPositive = pya.Region()
+        regionNegative = pya.Region()
+        
+        stripArrays = [
+            self.boxMarks(  -28.6,  109.0, 8.8,  190, -17.6,     0, 11,  1), #***
+            self.boxMarks(  109.0,   24.0, 190,  8.0,     0,  16.0,  1, 12), #*** 
+            
+            self.boxMarks( -113.5,  -28.6,  191, 8.8,     0, -17.6,  1, 11), #***
+            self.boxMarks(   24.0, -113.5,  8.0, 191,  16.0,     0,  12, 1), #***
+        ]
+        
+        for stripArray in stripArrays:
+            for strip in stripArray:
+                regionPositive.insert(strip.to_itype(unit))
+        
+        
+        regionBase.insert(pya.DBox(dx-baseSize/2, dy-baseSize/2, dx+baseSize/2, dy+baseSize/2).to_itype(unit))
+        regionPositive.insert(self.crossMark(100, 10).to_itype(unit))
+        regionNegative.insert(self.crossMark(  5,  1).to_itype(unit))
+        result = regionPositive - regionNegative
+        if self.lR: 
+            self.cell.shapes(self.l_layer).insert(regionBase - result)
+        else:
+            self.cell.shapes(self.l_layer).insert(result)
+            self.cell.shapes(self.base_layer).insert(regionBase)
+
+class ASML_XPA(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(ASML_XPA, self).__init__()
+        self.param("base",        self.TypeLayer,    "Base Layer",         default = pya.LayerInfo(0, 0))
+        self.param("l",           self.TypeLayer,    "Pattern Layer",      default = pya.LayerInfo(1, 0))
+        self.param("clrSize",     self.TypeDouble,   "Clear our size",     default =  610,   unit = "um") 
+        self.param("lR",          self.TypeBoolean,  "Pattern invert",     default = False)
+
+    def display_text_impl(self):
+        return "ASML_XPA"
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+    
+    def coerce_parameters_impl(self):
+        self.clrSize  = max(self.clrSize,  610)
+        
+    def boxMarks(self, cx, cy, w, h, px, py, nx, ny):
+        result = []
+        for ix in range(nx):
+            for iy in range(ny):
+                result.append(pya.DPolygon(pya.DBox(w, h).moved(cx + px * ix, cy + py * iy)))
+        return result
+        
+    def crossMark(self, size, linewidth):
+            x0 = -(size/2)
+            x1 = -linewidth/2
+            x2 =  linewidth/2
+            x3 =  (size/2)
+            y0 = x0
+            y1 = x1
+            y2 = x2
+            y3 = x3
+            
+            return pya.DPolygon([
+                pya.DPoint(x0, y1), 
+                pya.DPoint(x0, y2), 
+                pya.DPoint(x1, y2), 
+                pya.DPoint(x1, y3), 
+                pya.DPoint(x2, y3), 
+                pya.DPoint(x2, y2), 
+                pya.DPoint(x3, y2), 
+                pya.DPoint(x3, y1), 
+                pya.DPoint(x2, y1), 
+                pya.DPoint(x2, y0),
+                pya.DPoint(x1, y0), 
+                pya.DPoint(x1, y1), 
+            ])
+        
+    def produce_impl(self):
+        dx, dy         = -2.5, -2.5
+        baseSize       = self.clrSize
+        unit           = self.layout.dbu
+        regionBase     = pya.Region()
+        regionPositive = pya.Region()
+        regionNegative = pya.Region()
+        
+        stripArrays = [
+            self.boxMarks(  -28.6,  109.0, 8.8,  190, -17.6,     0, 11,  1), #***
+            self.boxMarks(  109.0,   24.0, 190,  8.0,     0,  16.0,  1, 12), #*** 
+            
+            self.boxMarks( -113.5,  -28.6,  191, 8.8,     0, -17.6,  1, 11), #***
+            self.boxMarks(   24.0, -113.5,  8.0, 191,  16.0,     0,  12, 1), #***
+        ]
+        
+        for stripArray in stripArrays:
+            for strip in stripArray:
+                regionPositive.insert(strip.to_itype(unit))
+        
+        
+        regionBase.insert(pya.DBox(dx-baseSize/2, dy-baseSize/2, dx+baseSize/2, dy+baseSize/2).to_itype(unit))
+        regionPositive.insert(self.crossMark(100, 10).to_itype(unit))
+        regionNegative.insert(self.crossMark(  5,  1).to_itype(unit))
+        result = regionPositive - regionNegative
+        if self.lR: 
+            self.cell.shapes(self.l_layer).insert(regionBase - result)
+        else:
+            self.cell.shapes(self.l_layer).insert(result)
+            self.cell.shapes(self.base_layer).insert(regionBase)
+            
+class ASML_SPM(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(ASML_SPM, self).__init__()   
+        self.param("l0",           self.TypeLayer,    "Layer Base",           default = pya.LayerInfo(1, 0))
+        self.param("l1",           self.TypeLayer,    "Layer Mark",           default = pya.LayerInfo(1, 0))
+        self.param("reverse",      self.TypeBoolean,  "Reverse Mark tone",    default = False)
+        optShape = self.param("optionShape",   self.TypeString, "Mark Type Option", default=0)
+        self.otpShapeDict = {
+            "Z3" : lambda r : self.asmZ3(0, 0, r),
+            "ZS" : lambda r : self.asmZS(0, 0, r),
+        }
+        
+        for i, o in enumerate(self.otpShapeDict) : 
+            optShape.add_choice(o, i)
+    
+    def display_text_impl(self):
+        markName = list(self.otpShapeDict.keys())[self.optionShape]
+        tone     = 'R' if self.reverse else ''
+        return f"ASML_SPM_{markName}{tone}"
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+        
+    def boxMarks(self, cx, cy, w, h, px, py, nx, ny):
+        result = []
+        for ix in range(nx):
+            for iy in range(ny):
+                result.append(pya.DPolygon(pya.DBox(w, h).moved(cx + px * ix, cy + py * iy)))
+        return result
+        
+    def asmZS(self, cx, cy, reverse = False):
+        unit    = self.layout.dbu
+        base    = [ pya.DPolygon(pya.DBox(866, 76)) ]
+        block   = [ pya.DPolygon(pya.DBox(786, 76)) ]
+        result  = [ pya.DPolygon(pya.DBox(1, 5)), pya.DPolygon(pya.DBox(5, 1))   ]
+        xl      = -360.0
+        xr      =  358.6
+        y       = 0
+        gnxl    = 21
+        gnxr    = 19
+        gpxl    = 16.0
+        gpxr    = 17.6
+       
+        for g in range(gnxl):
+            result += self.boxMarks( xl + gpxl * g, 0, 8.0, 72,  18.0, 0, 1, 1)
+        for g in range(gnxr):
+            result += self.boxMarks( xr - gpxr * g, 0, 8.8, 72, -17.6, 0, 1, 1)
+               
+        baseReg    = pya.Region().insert([d.to_itype(unit) for d in base]).move(cx/unit, cy/unit)
+        blockReg   = pya.Region().insert([d.to_itype(unit) for d in block]).move(cx/unit, cy/unit)
+        resultReg  = pya.Region().insert([d.to_itype(unit) for d in result])
+
+        resultReg = (blockReg - resultReg) if reverse else resultReg
+        self.cell.shapes(self.l0_layer).insert(baseReg)
+        self.cell.shapes(self.l1_layer).insert(resultReg)
+             
+    def asmZ3(self, cx, cy, reverse = False):
+        unit    = self.layout.dbu
+        base    = [ pya.DPolygon(pya.DBox(866, 76)) ]
+        block   = [ pya.DPolygon(pya.DBox(786, 76)) ]
+        result  = [ pya.DPolygon(pya.DBox(1, 5)), pya.DPolygon(pya.DBox(5, 1))   ]
+        xl      = -363.2
+        xr      =  361.8
+        y       = 0
+        gnxl    = 21
+        gnxr    = 19
+        gpxl    = 16
+        gpxr    = 17.6
+       
+        for g in range(gnxl):
+            result += self.boxMarks( xl + gpxl * g, 0, 1.6, 72, 3.2, 0, 3, 1)
+        for g in range(gnxr):
+            result += self.boxMarks( xr - gpxr * g, 0, 1.6, 72, -3.2, 0, 3, 1)
+               
+        baseReg    = pya.Region().insert([d.to_itype(unit) for d in base]).move(cx/unit, cy/unit)
+        blockReg   = pya.Region().insert([d.to_itype(unit) for d in block]).move(cx/unit, cy/unit)
+        resultReg  = pya.Region().insert([d.to_itype(unit) for d in result]).move(cx/unit, cy/unit)
+
+        resultReg = (blockReg - resultReg) if reverse else resultReg
+        self.cell.shapes(self.l0_layer).insert(baseReg)
+        self.cell.shapes(self.l1_layer).insert(resultReg)
+             
+    def produce_impl(self):   
+        markType = list(self.otpShapeDict)[self.optionShape]
+        self.otpShapeDict[markType](self.reverse)
+        
+class ASML_SPM_SET(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(ASML_SPM_SET, self).__init__()   
+        self.param("l0",           self.TypeLayer,    "Layer Base",           default = pya.LayerInfo(1, 0))
+        self.param("l1",           self.TypeLayer,    "Layer Mark",           default = pya.LayerInfo(1, 0))
+        
+    def display_text_impl(self):
+        return f"ASML_SPM_SET"
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())  
+          
+    def pcell(self, pcell_name, x, y, angle, pcell_parameters):
+        unit       = self.layout.dbu
+        lib        = pya.Library.library_by_name("VernierLib")
+        pcell_decl = lib.layout().pcell_declaration(pcell_name)
+        pcell_var  = self.layout.add_pcell_variant(lib, pcell_decl.id(), pcell_parameters) 
+        return pya.CellInstArray(pcell_var, pya.DCplxTrans (1.0, angle, False, x/unit, y/unit))
+        
+    def produce_impl(self):   
+        
+        pcell_Z3R = [self.l0, self.l1, True,  0]
+        pcell_ZS  = [self.l0, self.l1, False, 1]
+        pcell_Z3  = [self.l0, self.l1, False, 0]
+        
+        self.cell.insert(self.pcell("ASML_SPM", -866, 0, 0, pcell_Z3R))
+        self.cell.insert(self.pcell("ASML_SPM",    0, 0, 0, pcell_ZS)) 
+        self.cell.insert(self.pcell("ASML_SPM",  866, 0, 0, pcell_Z3)) 
+        
+class Vernier(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(Vernier, self).__init__()
+        self.param("l",            self.TypeLayer,    "Layer",                default = pya.LayerInfo(1, 0))
+        self.param("tickCount",    self.TypeInt,      "Tick mark count",      default =   5)
+        self.param("minorTick",    self.TypeInt,      "Major tick mark",      default =   5) 
+        self.param("majorTick",    self.TypeInt,      "Major tick mark",      default =  10)
+        self.param("lineW",        self.TypeDouble,   "Line width",           default =  20) 
+        self.param("lineS",        self.TypeDouble,   "Line space",           default =  20) 
+        self.param("stdL",         self.TypeDouble,   "Standard tick length", default = 100)
+        self.param("minorL",       self.TypeDouble,   "Minor tick length",    default = 150) 
+        self.param("majorL",       self.TypeDouble,   "Major tick length",    default = 200) 
+        self.param("flatEnd",      self.TypeBoolean,  "Flat ends",            default = False)
+
+    def display_text_impl(self):
+        return "Vernier"
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+    
+    def coerce_parameters_impl(self):
+        self.tickCount = max(self.tickCount, 1)
+        self.minorTick = max(self.minorTick, 0)
+        self.majorTick = max(self.majorTick, 0)
+        self.lineW     = max(self.lineW,     self.layout.dbu * 2)
+        self.lineS     = max(self.lineS,     self.layout.dbu * 2)
+        self.stdL      = max(self.stdL,      self.layout.dbu * 2)
+        self.majorL    = max(self.majorL,    self.layout.dbu * 2)
+        self.minorL    = max(self.minorL,    self.layout.dbu * 2)
+    
+    def produce_impl(self):
+        unit   = self.layout.dbu
+        pitch  = (self.lineW + self.lineS)
+        
+        for i in range(self.tickCount + 1):
+            length = self.stdL
+            
+            if self.minorTick &gt; 0 and (i % int(self.minorTick)) == 0:
+                length = self.minorL
+                
+            if self.majorTick &gt; 0 and (i % int(self.majorTick)) == 0:
+                length = self.majorL
+            
+            
+            box    = pya.DBox(self.lineW, length)
+            shiftX = float(pitch * i)
+            shiftY = float((length / 2) if self.flatEnd else 0)
+
+            self.cell.shapes(self.l_layer).insert(box.transformed(pya.DTrans(shiftX, shiftY)))
+            if i &gt; 0:
+                self.cell.shapes(self.l_layer).insert(box.transformed(pya.DTrans(shiftX * -1, shiftY)))
+            
+            
+class VernierPair(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(VernierPair, self).__init__()   
+        self.param("l1",           self.TypeLayer,    "Layer Verner 1",       default = pya.LayerInfo(1, 0))
+        self.param("l2",           self.TypeLayer,    "Layer Verner 2",       default = pya.LayerInfo(1, 0))
+        self.param("pairS",        self.TypeDouble,   "Verner Spacing",       default = 20)
+        self.param("offset",       self.TypeDouble,   "Verner offset",        default = -0.5)
+        
+        self.param("tickCount",    self.TypeInt,      "Tick mark count",      default =   5)
+        self.param("minorTick",    self.TypeInt,      "Major tick mark",      default =   5) 
+        self.param("majorTick",    self.TypeInt,      "Major tick mark",      default =  10)
+        self.param("lineW",        self.TypeDouble,   "Line width",           default =  20) 
+        self.param("lineS",        self.TypeDouble,   "Line space",           default =  20) 
+        self.param("stdL",         self.TypeDouble,   "Standard tick length", default = 100)
+        self.param("minorL",       self.TypeDouble,   "Minor tick length",    default = 150) 
+        self.param("majorL",       self.TypeDouble,   "Major tick length",    default = 200) 
+        
+    def display_text_impl(self):
+        return "VernierPair"
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+    
+    def coerce_parameters_impl(self):
+        self.tickCount = max(self.tickCount, 1)
+        self.minorTick = max(self.minorTick, 0)
+        self.majorTick = max(self.majorTick, 0)
+        self.lineW     = max(self.lineW,     self.layout.dbu * 2)
+        self.lineS     = max(self.lineS,     self.layout.dbu * 2)
+        self.stdL      = max(self.stdL,      self.layout.dbu * 2)
+        self.majorL    = max(self.majorL,    self.layout.dbu * 2)
+        self.minorL    = max(self.minorL,    self.layout.dbu * 2)
+        
+    def pcell(self, x, y, angle, pcell_parameters):
+        unit       = self.layout.dbu
+        lib        = pya.Library.library_by_name("VernierLib")
+        pcell_decl = lib.layout().pcell_declaration("Vernier")
+        pcell_var  = self.layout.add_pcell_variant(lib, pcell_decl.id(), pcell_parameters) 
+        return pya.CellInstArray(pcell_var, pya.DCplxTrans (1.0, angle, False, x/unit, y/unit))
+        
+    def produce_impl(self):
+        pcell_parameters1  = [
+            self.l1, self.tickCount, self.minorTick, self.majorTick, 
+            self.lineW, self.lineS, self.stdL, self.minorL, self.majorL, True]
+        
+        pcell_parameters2  = [
+            self.l2, self.tickCount, self.minorTick, self.majorTick, 
+            self.lineW, self.lineS + self.offset, self.stdL, self.minorL, self.majorL, True]
+        
+        self.cell.insert(self.pcell(0,  self.pairS/2,   0, pcell_parameters1))
+        self.cell.insert(self.pcell(0, -self.pairS/2, 180, pcell_parameters2)) 
+        
+class EPLEDMK(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(EPLEDMK, self).__init__()   
+        self.param("l0",           self.TypeLayer,    "Layer Base",           default = pya.LayerInfo(1, 0))
+        self.param("l1",           self.TypeLayer,    "Layer Verner 1",       default = pya.LayerInfo(1, 0))
+        self.param("l2",           self.TypeLayer,    "Layer Verner 2",       default = pya.LayerInfo(1, 0))
+        self.param("name1",        self.TypeString,   "Layer Name 1",         default = "Layer 1")
+        self.param("name2",        self.TypeString,   "Layer Name 2",         default = "Layer 2")
+        self.param("l1R",          self.TypeBoolean,  "Layer 1 invert",       default = False)
+        self.param("l2R",          self.TypeBoolean,  "Layer 2 invert",       default = False)
+                
+    def display_text_impl(self):
+        return "EPLEDMK"
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+        
+    def pcell(self, pcell_name, x, y, angle, pcell_parameters):
+        unit       = self.layout.dbu
+        lib        = pya.Library.library_by_name("VernierLib")
+        pcell_decl = lib.layout().pcell_declaration(pcell_name)
+        pcell_var  = self.layout.add_pcell_variant(lib, pcell_decl.id(), pcell_parameters) 
+        return pya.CellInstArray(pcell_var, pya.DCplxTrans (1.0, angle, False, x/unit, y/unit))
+        
+    def text(self, x, y, angle, pcell_parameters):
+        unit       = self.layout.dbu
+        lib        = pya.Library.library_by_name("Basic")
+        pcell_decl = lib.layout().pcell_declaration("TEXT")
+        pcell_var  = self.layout.add_pcell_variant(lib, pcell_decl.id(), pcell_parameters) 
+        return pya.CellInstArray(pcell_var, pya.DCplxTrans (1.0, angle, False, x/unit, y/unit))
+        
+
+        
+    def produce_impl(self):
+        cell = pya.Cell()
+        unit = self.layout.dbu
+        t1   = self.text(    8.3,   43.3,  0, [self.name1, 0, self.l1, 25.0])
+        t2   = self.text(    8.3,   68.3,  0, [self.name2, 0, self.l2, 25.0])
+        t3   = self.text(  -60.0,  127.2,  0, ["+",        0, self.l2, 40.0])
+        t4   = self.text(  -36.0,  -64.6, 90, ["-",        0, self.l2, 40.0])
+        t5   = self.text(   87.9, -108.7,  0, ["+",        0, self.l2, 40.0])
+        t6   = self.text( -107.9, -108.7,  0, ["-",        0, self.l2, 40.0])
+
+        
+        pcell_parameters1  = [ self.l1, self.l2, 4.0, -0.1, 10, 5, 10, 4, 4, 20, 30, 40 ]
+        pcell_parameters2  = [ self.l1, self.l2, 30, 46, 4 ]
+
+        self.cell.insert(self.pcell("VernierPair",  -62.0,   43.3,  90, pcell_parameters1))
+        self.cell.insert(self.pcell("VernierPair",    0.0, -106.7, 180, pcell_parameters1))
+        self.cell.insert(self.pcell("BoxAlign",      38.0,   -6.7,   0, pcell_parameters2))
+        self.cell.shapes(self.l0_layer).insert(pya.DBox(240.8, 332.4))
+        
+        for t in [t1, t2, t3, t4, t5, t6]:
+            self.cell.insert(t)
+            
+
+        self.cell.flatten(False)
+
+        region0  = pya.Region([s.polygon for s in self.cell.each_shape(self.l0_layer)]) 
+        region1  = pya.Region([s.polygon for s in self.cell.each_shape(self.l1_layer)]) 
+        region2  = pya.Region([s.polygon for s in self.cell.each_shape(self.l2_layer)]) 
+        region1 = (region0 - region1) if self.l1R else region1
+        region2 = (region0 - region2) if self.l2R else region2
+        self.cell.clear()
+        self.cell.shapes(self.l0_layer).insert(region0)
+        self.cell.shapes(self.l1_layer).insert(region1)
+        self.cell.shapes(self.l2_layer).insert(region2)
+        
+
+class EVG_HB_MARK(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(EVG_HB_MARK, self).__init__()   
+        self.param("markSize",     self.TypeInt,      "Mark Size",            default = 1, choices =[["60um", 0], ["50um", 1], ["40um", 2], ["30um", 3]])
+        self.param("l0",           self.TypeLayer,    "Layer Base",           default = pya.LayerInfo(1, 0))
+        self.param("l1",           self.TypeLayer,    "Layer Verner 1",       default = pya.LayerInfo(1, 0))
+        self.param("l2",           self.TypeLayer,    "Layer Verner 2",       default = pya.LayerInfo(1, 0))
+
+                
+    def display_text_impl(self):
+        return "EVG_HB_MARK"
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+        
+    
+    def boxList(self, w, h, ax, bx):
+        return  [
+            pya.DBox(w, h).move(-ax,  bx),
+            pya.DBox(h, w).move( bx,  ax),
+            pya.DBox(w, h).move( ax, -bx),
+            pya.DBox(h, w).move(-bx, -ax),
+        ]
+    def produce_impl(self):
+        a, b, c, d, e = [
+            [60, 10, 27.0, 7.0, 6],
+            [50,  8, 22.5, 6.5, 5],
+            [40,  7, 18.0, 4.0, 4],
+            [30,  5, 13.5, 3.5, 3],
+        ][self.markSize]
+        w, h = b, c
+        ax1  = (a - w)/2
+        bx1  = (a / 2) - (b * 2.0) - d + (c / 2)
+        ax2  = (a / 2) - (b * 1.5) - d
+        bx2  = bx1
+        
+        
+        self.cell.shapes(self.l0_layer).insert(pya.DBox(65, 65))
+        _ = [ self.cell.shapes(self.l1_layer).insert(b) for b in self.boxList(w, h, ax1, bx1)]
+        _ = [ self.cell.shapes(self.l2_layer).insert(b) for b in self.boxList(w, h, ax2, bx2)]
+
+class SUSS_HB_MARK(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(SUSS_HB_MARK, self).__init__()   
+        self.param("l0",           self.TypeLayer,    "Layer Base",           default = pya.LayerInfo(1, 0))
+        self.param("l1",           self.TypeLayer,    "Layer Verner 1",       default = pya.LayerInfo(1, 0))
+        self.param("l2",           self.TypeLayer,    "Layer Verner 2",       default = pya.LayerInfo(1, 0))
+
+                
+    def display_text_impl(self):
+        return "SUSS_HB_MARK"
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+        
+    
+    def crossMark(self, size, linewidth):
+        x0 = -(size/2)
+        x1 = -linewidth/2
+        x2 =  linewidth/2
+        x3 =  (size/2)
+        y0 = x0
+        y1 = x1
+        y2 = x2
+        y3 = x3
+        
+        return pya.DPolygon([
+            pya.DPoint(x0, y1), 
+            pya.DPoint(x0, y2), 
+            pya.DPoint(x1, y2), 
+            pya.DPoint(x1, y3), 
+            pya.DPoint(x2, y3), 
+            pya.DPoint(x2, y2), 
+            pya.DPoint(x3, y2), 
+            pya.DPoint(x3, y1), 
+            pya.DPoint(x2, y1), 
+            pya.DPoint(x2, y0),
+            pya.DPoint(x1, y0), 
+            pya.DPoint(x1, y1), 
+        ])
+        
+    def boxCrossMark1(self, size, lineWidth):
+        x0 = - size/2
+        x1 = x0 + lineWidth
+        y0 = x0
+        y1 = x1
+        
+        return [
+            pya.DBox( x0,  y0,  x1,  y1), pya.DBox(-x0, -y0, -x1, -y1), 
+            pya.DBox( x0, -y0,  x1, -y1), pya.DBox(-x0,  y0, -x1,  y1)
+        ]
+        
+    def produce_impl(self):     
+        self.cell.shapes(self.l0_layer).insert(pya.DBox(200, 200))
+        self.cell.shapes(self.l1_layer).insert(self.crossMark(160, 30))
+        _ = [ self.cell.shapes(self.l2_layer).insert(b) for b in self.boxCrossMark1(160, 60)]
+       
+class BESI_HB_MARK(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(BESI_HB_MARK, self).__init__()   
+        self.param("l0",           self.TypeLayer,    "Layer Base",           default = pya.LayerInfo(1, 0))
+        self.param("l1",           self.TypeLayer,    "Layer Verner 1",       default = pya.LayerInfo(1, 0))
+        self.param("l2",           self.TypeLayer,    "Layer Verner 2",       default = pya.LayerInfo(1, 0))
+
+    def display_text_impl(self):
+        return "BESI_HB_MARK"
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+        
+    
+    def circlePts(self, dia, points = 32):
+        rad =  2 *math.pi / points
+        r   = dia / 2
+        return [pya.DPoint(r * math.cos(i * rad), r * math.sin(i * rad))for i in range(points)]
+        
+    def ringMark(self, dia, linewidth, points = 32):
+        poly = pya.DPolygon(self.circlePts(dia, points))
+        poly.	insert_hole(self.circlePts(dia - (2 * linewidth), points))
+        return poly
+        
+    def produce_impl(self):     
+        resolution = 64
+        self.cell.shapes(self.l0_layer).insert(pya.DPolygon(self.circlePts(80, resolution)))
+        self.cell.shapes(self.l1_layer).insert(self.ringMark(16, 5, resolution))
+        self.cell.shapes(self.l1_layer).insert(self.ringMark(40, 5, resolution))
+        self.cell.shapes(self.l2_layer).insert(self.ringMark(70, 8, resolution))
+
+class Algner_STAR_MARK(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(Algner_STAR_MARK, self).__init__()   
+        self.param("l0",           self.TypeLayer,    "Layer Base",           default = pya.LayerInfo(1, 0))
+        self.param("l1",           self.TypeLayer,    "Layer Mark",           default = pya.LayerInfo(1, 0))
+        self.param("size",         self.TypeDouble,   "Mark Size",            default =  150) 
+        
+    def display_text_impl(self):
+        return "Algner_STAR_MARK"
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+        
+    def starMark(self, size, linewidth):
+        x0 = -(size/2)
+        x1 = -linewidth/2
+        x2 =  linewidth/2
+        x3 =  (size/2)
+        y0 = x0
+        y1 = x1
+        y2 = x2
+        y3 = x3
+        rs = (size - linewidth)/2 
+        
+        return pya.DPolygon([
+            pya.DPoint(x0, y1), 
+            pya.DPoint(-rs, 0), 
+            pya.DPoint(x0, y2), 
+            pya.DPoint(x1, y2), 
+            pya.DPoint(x1, y3), 
+            pya.DPoint( 0, rs), 
+            pya.DPoint(x2, y3), 
+            pya.DPoint(x2, y2), 
+            pya.DPoint(x3, y2), 
+            pya.DPoint(rs,  0), 
+            pya.DPoint(x3, y1), 
+            pya.DPoint(x2, y1), 
+            pya.DPoint(x2, y0),
+            pya.DPoint( 0,-rs),
+            pya.DPoint(x1, y0), 
+            pya.DPoint(x1, y1), 
+        ])
+        
+    def produce_impl(self):   
+        self.cell.shapes(self.l0_layer).insert(pya.DBox(self.size, self.size))
+        self.cell.shapes(self.l1_layer).insert(self.starMark(self.size, self.size/3))
+
+class CANON_MARK(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(CANON_MARK, self).__init__()   
+        self.param("l0",           self.TypeLayer,    "Layer Base",           default = pya.LayerInfo(1, 0))
+        self.param("l1",           self.TypeLayer,    "Layer Mark",           default = pya.LayerInfo(1, 0))
+        self.param("reverse",      self.TypeBoolean,  "Reverse Mark tone",    default = False)
+        optShape = self.param("optionShape",   self.TypeString, "Mark Type Option", default=0)
+        self.otpShapeDict = {
+            "TVPA1"      : lambda r : self.tv_pa1_Mark(r),
+            "TVPA2"      : lambda r : self.tv_pa2_Mark(r),
+            "AGA_XY"     : lambda r : self.aga_xy_Mark(r),
+            "TGA_XY"     : lambda r : self.tga_xy_Mark(r),
+            "TVPA1_60"   : lambda r : self.tv_pa1_Mark_60(r),
+            "TVPA2_60"   : lambda r : self.tv_pa2_Mark_60(r),
+            "AGA_XY_60"  : lambda r : self.aga_xy_Mark_60(r),
+            "TGA_XY_60"  : lambda r : self.tga_xy_Mark_60(r),    
+        }
+        
+        for i, o in enumerate(self.otpShapeDict) : 
+            optShape.add_choice(o, i)
+    def display_text_impl(self):
+        markType = list(self.otpShapeDict)[self.optionShape]
+        tone     = "_reverse" if self.reverse else ""
+        return "CANON_MARK_%s%s" % (markType, tone)
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+        
+    def boxMarks(self, cx, cy, w, h, px, py, nx, ny):
+        result = []
+        for ix in range(nx):
+            for iy in range(ny):
+                result.append(pya.DBox(w, h).moved(cx + px * ix, cy + py * iy))
+
+        return result
+        
+    def tv_pa_Mark(self, x, y, size, clr, crossBox, crossW, crossH, reverse = False):
+        unit    = self.layout.dbu
+        region0 = pya.Region()
+        region1 = pya.Region()
+        region2 = pya.Region()
+        region3 = pya.Region()
+        region0.insert(pya.DBox(    size,     size).to_itype(unit))
+        region1.insert(pya.DBox(     clr,      clr).to_itype(unit))
+        region2.insert(pya.DBox(crossBox, crossBox).to_itype(unit))
+        region3.insert(pya.DBox(  crossW,   crossH).to_itype(unit))
+        region3.insert(pya.DBox(  crossH,   crossW).to_itype(unit))
+        result  = (region0 - region1) + (region2 - region3)
+        result  = (region0 - result) if reverse else result
+        trans   = pya.DTrans(0, False,x, y).to_itype(unit)
+        self.cell.shapes(self.l0_layer).insert(region0.transformed(trans))
+        self.cell.shapes(self.l1_layer).insert(result.transformed(trans))
+        
+    def tv_pa1_Mark_60(self, reverse = False):
+        self.tv_pa_Mark(0, 0, 60, 40, 32, 4, 27, reverse)
+        
+    def tv_pa1_Mark(self, reverse = False):
+        self.tv_pa_Mark(0, 0, 60, 40, 32, 4, 27, reverse)
+        
+    def tv_pa2_Mark_60(self, reverse = False):
+        self.tv_pa_Mark(0, 0, 60, 60, 44, 6, 40, reverse)
+        
+    def tv_pa2_Mark(self, reverse = False):
+        self.tv_pa_Mark(0, 0, 80, 60, 44, 6, 40, reverse)
+           
+    def aga_Mark(self, x, y, w, h, verticle = True, reverse = False):
+        unit    = self.layout.dbu
+        region0 = pya.Region()
+        region1 = pya.Region()
+        region0.insert(pya.DBox(w, h).to_itype(unit))
+        region1.insert(pya.DBox(4, 34).moved(-50, 0).to_itype(unit))
+        region1.insert(pya.DBox(4, 30).moved(-30, 0).to_itype(unit))
+        region1.insert(pya.DBox(4, 30).moved(-10, 0).to_itype(unit))
+        region1.insert(pya.DBox(4, 34).moved( 50, 0).to_itype(unit))
+        region1.insert(pya.DBox(4, 30).moved( 30, 0).to_itype(unit))
+        region1.insert(pya.DBox(4, 30).moved( 10, 0).to_itype(unit))
+        region1  = region1 if reverse else (region0 - region1)
+
+        trans = pya.DTrans(0, False, x, y).to_itype(unit)
+        self.cell.shapes(self.l0_layer).insert(region0.transformed(trans))
+        self.cell.shapes(self.l1_layer).insert(region1.transformed(trans))
+        
+    def aga_xy_Mark_60(self, reverse = False):
+        self.aga_Mark( 0, 0, 186, 60, True, reverse)
+        
+    def aga_xy_Mark(self, reverse = False):
+        self.aga_Mark( 0, 0, 186, 80, True, reverse)
+        
+    def tga_xy_Mark_60(self, reverse = False):
+                                
+        self.tv_pa_Mark(-55, 0,  60, 40, 32, 4, 27, reverse)
+        self.aga_Mark(   40, 0, 130, 60, False, reverse)
+          
+    def tga_xy_Mark(self, reverse = False):
+        self.tv_pa_Mark(-55, 0,  80, 60, 44, 6, 40, reverse)
+        self.aga_Mark(   40, 0, 130, 80, False, reverse)
+                
+    def produce_impl(self):   
+        markType = list(self.otpShapeDict)[self.optionShape]
+        self.otpShapeDict[markType](self.reverse)
+
+class NIKON_MARK(pya.PCellDeclarationHelper):
+    def __init__(self):
+        super(NIKON_MARK, self).__init__()   
+        self.param("l0",           self.TypeLayer,    "Layer Base",           default = pya.LayerInfo(1, 0))
+        self.param("l1",           self.TypeLayer,    "Layer Mark",           default = pya.LayerInfo(1, 0))
+        self.param("reverse",      self.TypeBoolean,  "Reverse Mark tone",    default = False)
+        optShape = self.param("optionShape",   self.TypeString, "Mark Type Option", default=0)
+        self.otpShapeDict = {
+            "FIA_XY"       : lambda r : self.fia_xyMark      (r),
+            "FIA_1D_XY"    : lambda r : self.fia_1d_xyMark   (r),
+            "FIA_2D_XY"    : lambda r : self.fia_2d_xyMark   (r),
+            "SEARCH_X"     : lambda r : self.search_xMark    (r),
+            "SEARCH_Y"     : lambda r : self.search_yMark    (r),
+            "FIA_XY_60"    : lambda r : self.fia_xyMark_60   (r),
+            "FIA_1D_XY_60" : lambda r : self.fia_1d_xyMark_60(r),
+            "FIA_2D_XY_60" : lambda r : self.fia_2d_xyMark_60(r),
+            "SEARCH_X_60"  : lambda r : self.search_xMark_60 (r),
+            "SEARCH_Y_60"  : lambda r : self.search_yMark_60 (r),
+        }
+        
+        for i, o in enumerate(self.otpShapeDict) : 
+            optShape.add_choice(o, i)
+            
+    def display_text_impl(self):
+        markType = list(self.otpShapeDict)[self.optionShape]
+        tone     = "_reverse" if self.reverse else ""
+        return "NIKON_MARK_%s%s" % (markType, tone)
+        
+    def can_create_from_shape_impl(self):
+        return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
+        
+    def transformation_from_shape_impl(self):
+        return pya.Trans(self.shape.bbox().center())
+        
+    def boxMarks(self, cx, cy, w, h, px, py, nx, ny):
+        result = []
+        for ix in range(nx):
+            for iy in range(ny):
+                result.append(pya.DPolygon(pya.DBox(w, h).moved(cx + px * ix, cy + py * iy)))
+
+        return result
+        
+    def fia_xyMark_60(self, reverse = False):
+        unit    = self.layout.dbu
+        region0 = pya.Region()
+        region1 = pya.Region()
+        region0.insert(pya.DBox(140, 60).to_itype(unit))
+        region1.insert([b.to_itype(unit) for b in self.boxMarks( -48, -24,  1.6, 6, 12,  8,  9, 7)])
+        region1 = (region0 - region1) if reverse else region1
+        self.cell.shapes(self.l0_layer).insert(region0)
+        self.cell.shapes(self.l1_layer).insert(region1)
+        
+    def fia_xyMark(self, reverse = False):
+        unit    = self.layout.dbu
+        region0 = pya.Region()
+        region1 = pya.Region()
+        region0.insert(pya.DBox(140, 80).to_itype(unit))
+        region1.insert([b.to_itype(unit) for b in self.boxMarks( -48, -32,  1.6, 6, 12,  8,  9, 9)])
+        region1 = (region0 - region1) if reverse else region1
+        self.cell.shapes(self.l0_layer).insert(region0)
+        self.cell.shapes(self.l1_layer).insert(region1)
+        
+    def fia_1d_xyMark_60(self, reverse = False):
+        unit    = self.layout.dbu
+        region0 = pya.Region()
+        region1 = pya.Region()
+        region0.insert(pya.DBox(180, 60).to_itype(unit))
+        region1.insert([b.to_itype(unit) for b in self.boxMarks( -48,   0,  6, 54, 12,  0,  9, 1)])
+        region1 = (region0 - region1) if reverse else region1
+        self.cell.shapes(self.l0_layer).insert(region0)
+        self.cell.shapes(self.l1_layer).insert(region1)
+        
+    def fia_1d_xyMark(self, reverse = False):
+        unit    = self.layout.dbu
+        region0 = pya.Region()
+        region1 = pya.Region()
+        region0.insert(pya.DBox(180, 80).to_itype(unit))
+        region1.insert([b.to_itype(unit) for b in self.boxMarks( -48,   0,  6, 70, 12,  0,  9, 1)])
+        region1 = (region0 - region1) if reverse else region1
+        self.cell.shapes(self.l0_layer).insert(region0)
+        self.cell.shapes(self.l1_layer).insert(region1)
+
+    def fia_2d_xyMark_60(self, reverse = False):
+        unit    = self.layout.dbu
+        region0 = pya.Region()
+        region1 = pya.Region()
+        region0.insert(pya.DBox(140, 60).to_itype(unit))
+        region1.insert([b.to_itype(unit) for b in self.boxMarks( -60,   0,  6, 54, 12,  0,  3, 1)])
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(   0, -24, 54,  6,  0, 12,  1, 5)])
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(  36,   0,  6, 54, 12,  0,  3, 1)])
+        region1 = (region0 - region1) if reverse else region1
+        self.cell.shapes(self.l0_layer).insert(region0)
+        self.cell.shapes(self.l1_layer).insert(region1)
+        
+    def fia_2d_xyMark(self, reverse = False):
+        unit    = self.layout.dbu
+        region0 = pya.Region()
+        region1 = pya.Region()
+        region0.insert(pya.DBox(140, 80).to_itype(unit))
+        region1.insert([b.to_itype(unit) for b in self.boxMarks( -60,   0,  6, 70, 12,  0,  3, 1)])
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(   0, -30, 54,  6,  0, 12,  1, 6)])
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(  36,   0,  6, 70, 12,  0,  3, 1)])
+        region1 = (region0 - region1) if reverse else region1
+        self.cell.shapes(self.l0_layer).insert(region0)
+        self.cell.shapes(self.l1_layer).insert(region1)
+        
+    def search_xMark_60(self, reverse = False):
+        y0      = -25
+        y1      = y0 + 26
+        y2      = y1 + 20
+        unit    = self.layout.dbu
+        region0 = pya.Region()
+        region1 = pya.Region()
+        region0.insert(pya.DBox(300, 60).to_itype(unit))
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(-144,  y2,  4,  4,  6,  0, 49, 1)])
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(-144,  y1,  4,  4,  6,  0, 49, 1)])
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(-144,  y0,  4,  4,  6,  0, 49, 1)])
+        region1 = (region0 - region1) if reverse else region1
+        self.cell.shapes(self.l0_layer).insert(region0)
+        self.cell.shapes(self.l1_layer).insert(region1)
+        
+    def search_xMark(self, reverse = False):
+        y0      = -26
+        y1      = y0 + 26
+        y2      = y1 + 20
+        unit    = self.layout.dbu
+        region0 = pya.Region()
+        region1 = pya.Region()
+        region0.insert(pya.DBox(300, 80).to_itype(unit))
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(-144,  y2,  4,  4,  6,  0, 49, 1)])
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(-144,  y1,  4,  4,  6,  0, 49, 1)])
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(-144,  y0,  4,  4,  6,  0, 49, 1)])
+        region1 = (region0 - region1) if reverse else region1
+        self.cell.shapes(self.l0_layer).insert(region0)
+        self.cell.shapes(self.l1_layer).insert(region1)
+        
+    def search_yMark_60(self, reverse = False):
+        x0      = -25
+        x1      = x0 + 26
+        x2      = x1 + 20
+        unit    = self.layout.dbu
+        region0 = pya.Region()
+        region1 = pya.Region()
+        region0.insert(pya.DBox(60, 70).to_itype(unit))
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(  x0, -24,  4,  4,  0,  8,  1, 7)])
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(  x1, -24,  4,  4,  0,  8,  1, 7)])
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(  x2, -24,  4,  4,  0,  8,  1, 7)])
+        region1 = (region0 - region1) if reverse else region1
+        self.cell.shapes(self.l0_layer).insert(region0)
+        self.cell.shapes(self.l1_layer).insert(region1)
+              
+    def search_yMark(self, reverse = False):
+        x0      = -26
+        x1      = x0 + 26
+        x2      = x1 + 20
+        unit    = self.layout.dbu
+        region0 = pya.Region()
+        region1 = pya.Region()
+        region0.insert(pya.DBox(80, 70).to_itype(unit))
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(  x0, -24,  4,  4,  0,  8,  1, 7)])
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(  x1, -24,  4,  4,  0,  8,  1, 7)])
+        region1.insert([b.to_itype(unit) for b in self.boxMarks(  x2, -24,  4,  4,  0,  8,  1, 7)])
+        region1 = (region0 - region1) if reverse else region1
+        self.cell.shapes(self.l0_layer).insert(region0)
+        self.cell.shapes(self.l1_layer).insert(region1)
+        
+    def produce_impl(self):   
+        markType = list(self.otpShapeDict)[self.optionShape]
+        self.otpShapeDict[markType](self.reverse)
+        
+        
+class VernierLib(pya.Library):
+    def __init__(self):
+        self.description = "VernierLib"
+        self.layout().register_pcell("BoxAlign",          BoxAlign())
+        self.layout().register_pcell("BoxSegAlign",       BoxSegAlign())
+        self.layout().register_pcell("ASML_PM",           ASML_PM())
+        self.layout().register_pcell("ASML_SPM",          ASML_SPM())
+        self.layout().register_pcell("ASML_SPM_SET",      ASML_SPM_SET())
+        self.layout().register_pcell("Vernier",           Vernier())
+        self.layout().register_pcell("VernierPair",       VernierPair())
+        self.layout().register_pcell("EPLEDMK",           EPLEDMK())
+        self.layout().register_pcell("EVG_HB_MARK",       EVG_HB_MARK())
+        self.layout().register_pcell("SUSS_HB_MARK",      SUSS_HB_MARK())
+        self.layout().register_pcell("BESI_HB_MARK",      BESI_HB_MARK())
+        self.layout().register_pcell("Algner_STAR_MARK",  Algner_STAR_MARK())
+        self.layout().register_pcell("NIKON_MARK",        NIKON_MARK())
+        self.layout().register_pcell("CANON_MARK",        CANON_MARK())
+    
+        self.register("VernierLib")
+    
+VernierLib()
+
+</text>
+</klayout-macro>
