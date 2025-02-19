@@ -21,7 +21,7 @@ class TRIANGLE_ISO(pya.PCellDeclarationHelper):
         self.param("prime_a",      self.TypeString,  "Prime Angle",        unit = "deg",  default =   "--")
 
         self.param("rounding",     self.TypeDouble,  "Rounding",           unit =  "um",  default =    0)
-        self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",  default =   32)
+        self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",  default =   64)
         self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",   default =    0)
         _ = [ self.d_option.add_choice(k,v) for k, v in self.dimension_option_dict.items()]
          

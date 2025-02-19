@@ -1,4 +1,5 @@
 import pya
+import math
 from Lib_STL        import STL
 from Lib_MISC       import MISC
 
@@ -29,7 +30,7 @@ class POLYGON(pya.PCellDeclarationHelper):
         self.param("start_a",      self.TypeDouble,  "Rotate Angle",       unit = "deg",   default =    0)
         
         self.param("rounding",     self.TypeDouble,  "Rounding",           unit =  "um",   default =    0)
-        self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",   default =   32)
+        self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",   default =   64)
         self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",    default =    0)
         _ = [ self.d_option.add_choice(k,v) for k, v in self.dimension_option_dict.items()]
         _ = [ self.n_option.add_choice(k,v) for k, v in self.normal_option_dict.items()]
@@ -59,10 +60,11 @@ class POLYGON(pya.PCellDeclarationHelper):
         return pya.Trans(self.shape.bbox().center())
 
     def produce_impl(self): 
+        a_rad = math.radians(360/self.sides) / 2
         radius = self.size / {
             0: 1,
-            1: ( STL.sin(360/self.sides/2) * 2),
-            2: ( 1 + STL.cos(360/self.sides/2)) if self.sides%2 ==1 else self.size /STL.cos(360/self.sides/2)/2,
+            1: ( math.sin(a_rad) * 2),
+            2: (1 + math.cos(a_rad)) if (self.sides%2 == 1) else (math.cos(a_rad) * 2) ,
         }[self.dimension_option]
         
         offset = (0.5 * 360 / self.sides) + 90 * {
@@ -80,4 +82,4 @@ class POLYGON(pya.PCellDeclarationHelper):
 
         obj = MISC.bias(poly, self.bias, self.layout.dbu)
             
-        self.cell.shapes(self.main_layer).insert(poly)
+        self.cell.shapes(self.main_layer).insert(obj)

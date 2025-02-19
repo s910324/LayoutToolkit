@@ -74,6 +74,16 @@ class STL(object):
             pya.DPoint((x + (w/2)), (y + (h/2))),
         ]
         
+    def parellelgon(x, y, w, h, offset):
+        half_offset = offset/2
+        return [
+            pya.DPoint((x + (w/2) + half_offset), (y + (h/2))),
+            pya.DPoint((x - (w/2) + half_offset), (y + (h/2))),
+            pya.DPoint((x - (w/2) - half_offset), (y - (h/2))),
+            pya.DPoint((x + (w/2) - half_offset), (y - (h/2))),
+            pya.DPoint((x + (w/2) + half_offset), (y + (h/2))),
+        ]
+        
     def diamond(x, y, w, h):
         return [
             pya.DPoint((x + (w/2)),           0),

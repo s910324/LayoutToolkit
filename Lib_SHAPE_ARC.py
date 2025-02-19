@@ -31,9 +31,9 @@ class ARC(pya.PCellDeclarationHelper):
         self.param("start_ext",    self.TypeDouble,  "Start End extend",   unit =  "um",  default =    0)
         self.param("stop_ext",     self.TypeDouble,  "Stop End extend",    unit =  "um",  default =    0)
         
-        self.param("arc_points",   self.TypeInt,     "Arc Points",         unit = "pts",  default =   32)
+        self.param("arc_points",   self.TypeInt,     "Arc Points",         unit = "pts",  default =   64)
         self.param("rounding",     self.TypeDouble,  "Rounding",           unit =  "um",  default =    0)
-        self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",  default =   32)
+        self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",  default =   64)
         self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",   default =    0)
         
 

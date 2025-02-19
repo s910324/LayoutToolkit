@@ -17,14 +17,18 @@ class CIRCLE(pya.PCellDeclarationHelper):
         self.d_option = self.param("dimension_option", self.TypeString,  "Dimension Options",    default = 1)
 
         self.param("size",         self.TypeDouble,  "Size",               unit =  "um",   default =   10)
-        self.param("sides",        self.TypeInt,     "Circle Points",      unit = "pts",   default =   32)
+        self.param("sides",        self.TypeInt,     "Circle Points",      unit = "pts",   default =   64)
         self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",    default =    0)
         _ = [ self.d_option.add_choice(k,v) for k, v in self.dimension_option_dict.items()]
 
     def display_text_impl(self):
         class_name  = self.__class__.__name__
         custom_name = self.name
-        param_name  = f"size={self.size}"
+        d_string    ={
+            0: "radius",
+            1: "diameter",
+        }[self.dimension_option]
+        param_name  = f"({d_string}, {round(self.size, 6)})"
         
         return "_".join([ n for n in [custom_name, class_name, param_name] if n ])
     

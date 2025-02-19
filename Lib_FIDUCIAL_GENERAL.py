@@ -16,8 +16,8 @@ class GENERAL(pya.PCellDeclarationHelper):
             "CROSS-BOX1" :  self.cross_box_mark1,
             "CROSS-BOX2" :  self.cross_box_mark2,
             "CROSS-BOX3" :  self.cross_box_mark3,
-            #"BOX-CROSS1" :  self.box_cross_mark1,
-            #"BOX-CROSS2" :  self.box_cross_mark2,
+            "BOX-CROSS1" :  self.box_cross_mark1,
+            "BOX-CROSS2" :  self.box_cross_mark2,
             "DOVETAIL"   :  self.dovetail       ,
         }
           
@@ -33,7 +33,7 @@ class GENERAL(pya.PCellDeclarationHelper):
         self.param("base_h",       self.TypeDouble,  "Base Height",        unit =  "um",   default =    15)
         
         self.param("rounding",     self.TypeDouble,  "Rounding",           unit =  "um",   default =     0)
-        self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",   default =    32)
+        self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",   default =    64)
         self.param("bias",         self.TypeDouble,  "Shape Bias",         unit =  "um",   default =     0)
         self.param("invert",       self.TypeBoolean, "Pattern invert",                     default = False)
         
@@ -43,7 +43,7 @@ class GENERAL(pya.PCellDeclarationHelper):
     def display_text_impl(self):
         class_name  = self.__class__.__name__
         custom_name = self.name
-        param_name  = f"({self.size_p},{self.line_w})"
+        param_name  = f"({round(self.size_p, 6)},{round(self.line_w, 6)})"
         
         return "_".join([ n for n in [custom_name, class_name, param_name] if n ])
         
@@ -106,6 +106,37 @@ class GENERAL(pya.PCellDeclarationHelper):
             pya.DPolygon(STL.rect( offset, offset, self.line_w, self.line_w)).to_itype(self.layout.dbu),
             pya.DPolygon(STL.cross( 0, 0, self.size_p, self.size_p, self.line_w)).to_itype(self.layout.dbu)
         ]) 
+
+    def box_cross_mark1(self):
+        offset = -((self.size_p-self.line_w) / 2) 
+        
+        x0 = - self.size_p/2
+        x1 = x0 + self.line_w
+        y0 = x0
+        y1 = x1
+        
+        return pya.Region([pya.DPolygon(b).to_itype(self.layout.dbu) for b in [
+            pya.DBox( x0,  y0,  x1,  y1), pya.DBox(-x0, -y0, -x1, -y1), 
+            pya.DBox( x0, -y0,  x1, -y1), pya.DBox(-x0,  y0, -x1,  y1)
+        ]])
+        
+    def box_cross_mark2(self):
+        offset = -((self.size_p-self.line_w) / 2) 
+        
+        x0 = - self.size_p/2
+        x1 = x0 + self.line_w
+        x2 = -self.line_w/2
+        x3 =  self.line_w/2
+        x4 =  self.size_p/2 - self.line_w
+        x5 =  self.size_p/2
+        y0, y1, y2 ,y3, y4, y5 = x0, x1, x2, x3, x4, x5
+
+
+        
+        return pya.Region([pya.DPolygon(b).to_itype(self.layout.dbu) for b in [
+            pya.DBox( x0, y2, x1, y3), pya.DBox(x2, y2, x3, y3), pya.DBox(x4, y2, x5, y3), 
+            pya.DBox( x2, y0, x3, y1), pya.DBox(x2, y4, x3, y5), 
+        ]])
         
     def produce_impl(self):  
         key  = list(self.type_option_dict.keys())[self.type_option]

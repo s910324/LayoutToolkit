@@ -35,10 +35,12 @@ import Lib_SHAPE_RING
 import Lib_SHAPE_POLYGON
 import Lib_SHAPE_RECT
 import Lib_SHAPE_RECTRING
+import Lib_SHAPE_RECTRING_ADVANCED
 import Lib_SHAPE_SERPANT
 import Lib_SHAPE_CIRCLERECT
 import Lib_SHAPE_TRIANGLE
 import Lib_SHAPE_TRIANGLE_ISO
+import LIB_SHAPE_PARELLEOGON
 
 def rld():
     from   importlib import reload 
@@ -51,40 +53,46 @@ def rld():
     reload(Lib_SHAPE_POLYGON)
     reload(Lib_SHAPE_RECT)
     reload(Lib_SHAPE_RECTRING)
+    reload(Lib_SHAPE_RECTRING_ADVANCED)
     reload(Lib_SHAPE_SERPANT)
     reload(Lib_SHAPE_CIRCLERECT)
     reload(Lib_SHAPE_TRIANGLE)
     reload(Lib_SHAPE_TRIANGLE_ISO)
+    reload(LIB_SHAPE_PARELLEOGON)
 rld()
 
-from Lib_STL                import STL
-from Lib_MISC               import MISC
-from Lib_SHAPE_PIE          import PIE
-from Lib_SHAPE_ARC          import ARC
-from Lib_SHAPE_CIRCLE       import CIRCLE
-from Lib_SHAPE_RING         import RING
-from Lib_SHAPE_POLYGON      import POLYGON
-from Lib_SHAPE_RECT         import RECT
-from Lib_SHAPE_RECTRING     import RECTRING
-from Lib_SHAPE_SERPANT      import SERPANT
-from Lib_SHAPE_CIRCLERECT   import CIRCLERECT
-from Lib_SHAPE_TRIANGLE     import TRIANGLE
-from Lib_SHAPE_TRIANGLE_ISO import TRIANGLE_ISO
+from Lib_STL                     import STL
+from Lib_MISC                    import MISC
+from Lib_SHAPE_PIE               import PIE
+from Lib_SHAPE_ARC               import ARC
+from Lib_SHAPE_CIRCLE            import CIRCLE
+from Lib_SHAPE_RING              import RING
+from Lib_SHAPE_POLYGON           import POLYGON
+from Lib_SHAPE_RECT              import RECT
+from Lib_SHAPE_RECTRING          import RECTRING
+from Lib_SHAPE_RECTRING_ADVANCED import RECTRING_ADVANCED
+from Lib_SHAPE_SERPANT           import SERPANT
+from Lib_SHAPE_CIRCLERECT        import CIRCLERECT
+from Lib_SHAPE_TRIANGLE          import TRIANGLE
+from Lib_SHAPE_TRIANGLE_ISO      import TRIANGLE_ISO
+from LIB_SHAPE_PARELLEOGON       import PARELLEOGON
 
 class SHAPE(pya.Library):
   def __init__(self):
     self.description = "SHAPE"
-    self.layout().register_pcell("PIE",                   PIE())
-    self.layout().register_pcell("ARC",                   ARC())
-    self.layout().register_pcell("CIRCLE",             CIRCLE())
-    self.layout().register_pcell("RING",                 RING())
-    self.layout().register_pcell("POLYGON",           POLYGON())
-    self.layout().register_pcell("RECT",                 RECT())
-    self.layout().register_pcell("RECTRING",         RECTRING())
-    self.layout().register_pcell("SERPANT",           SERPANT())
-    self.layout().register_pcell("CIRCLERECT",     CIRCLERECT())
-    self.layout().register_pcell("TRIANGLE",         TRIANGLE())
-    self.layout().register_pcell("TRIANGLE_ISO", TRIANGLE_ISO())
+    self.layout().register_pcell("PIE",                             PIE())
+    self.layout().register_pcell("ARC",                             ARC())
+    self.layout().register_pcell("CIRCLE",                       CIRCLE())
+    self.layout().register_pcell("RING",                           RING())
+    self.layout().register_pcell("POLYGON",                     POLYGON())
+    self.layout().register_pcell("RECT",                           RECT())
+    self.layout().register_pcell("RECTRING",                   RECTRING())
+    self.layout().register_pcell("RECTRING_ADVANCED", RECTRING_ADVANCED())
+    self.layout().register_pcell("SERPANT",                     SERPANT())
+    self.layout().register_pcell("CIRCLERECT",               CIRCLERECT())
+    self.layout().register_pcell("TRIANGLE",                   TRIANGLE())
+    self.layout().register_pcell("TRIANGLE_ISO",           TRIANGLE_ISO())
+    self.layout().register_pcell("PARELLEOGON",             PARELLEOGON())
     self.register("SHAPE")
 
 SHAPE()

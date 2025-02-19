@@ -25,9 +25,9 @@ class PIE(pya.PCellDeclarationHelper):
         self.param("stop_a",       self.TypeDouble,  "Stop Angle",         unit = "deg",  default =   90)
     
         
-        self.param("pie_points",   self.TypeInt,     "Pie Points",         unit = "pts",  default =   32)
+        self.param("pie_points",   self.TypeInt,     "Pie Points",         unit = "pts",  default =   64)
         self.param("rounding",     self.TypeDouble,  "Rounding",           unit =  "um",  default =    0)
-        self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",  default =   32)
+        self.param("points",       self.TypeInt,     "Round Points",       unit = "pts",  default =   64)
         self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",   default =    0)
         self.r_option = self.param("center_option", self.TypeString,  "Round Center Options",  default = 1)
 

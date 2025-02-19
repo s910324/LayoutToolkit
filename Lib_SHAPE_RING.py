@@ -27,7 +27,7 @@ class RING(pya.PCellDeclarationHelper):
         self.param("line_w",       self.TypeDouble,  "Line Width",         unit =  "um",  default =    2)
         self.param("start_a",      self.TypeDouble,  "Start Angle",        unit = "deg",  default =    0)
 
-        self.param("ring_points",  self.TypeInt,     "Ring Points",        unit = "pts",  default =   32)
+        self.param("ring_points",  self.TypeInt,     "Ring Points",        unit = "pts",  default =   64)
         self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",   default =    0)
 
         _ = [ self.d_option.add_choice(k,v) for k, v in self.dimension_option_dict.items()]

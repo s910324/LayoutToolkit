@@ -44,9 +44,9 @@ class CIRCLERECT(pya.PCellDeclarationHelper):
         self.param("size_r",       self.TypeDouble,  "Circle Size",        unit =  "um",  default =   20)
         self.param("circle_x",     self.TypeDouble,  "Circle Origin X",    unit =  "um",  default =    0)
         self.param("circle_y",     self.TypeDouble,  "Circle Origin Y",    unit =  "um",  default =    0)
-        self.param("points",       self.TypeInt,     "Circle Points",      unit = "pts",  default =   32)
+        self.param("points",       self.TypeInt,     "Circle Points",      unit = "pts",  default =   64)
         self.param("bias",         self.TypeDouble,  "Shape Bias",         unit = "um",   default =    0)
-        self.param("rounding",     self.TypeDouble,  "Rounding",           unit =  "um",   default =    0)
+        self.param("rounding",     self.TypeDouble,  "Rounding",           unit = "um",   default =    0)
         
         _ = [ self.c_option.add_choice(k,v) for k, v in self.center_option_dict.items()]
         _ = [ self.b_option.add_choice(k,v) for k, v in self.bool_option_dict.items()]
@@ -55,7 +55,7 @@ class CIRCLERECT(pya.PCellDeclarationHelper):
     def display_text_impl(self):
         class_name  = self.__class__.__name__
         custom_name = self.name
-        param_name  = f"{self.size_w},{self.size_h},{self.size_r}"
+        param_name  = f"({self.size_w},{self.size_h},{self.size_r})"
         
         return "_".join([ n for n in [custom_name, class_name, param_name] if n ])
 

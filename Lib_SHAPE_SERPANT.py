@@ -30,7 +30,7 @@ class SERPANT(pya.PCellDeclarationHelper):
         self.param("stop_ext",     self.TypeDouble,  "End Extend",          unit =  "um",   default =  5)
 
         self.param("jog_r",        self.TypeDouble,  "Jog Rounding",        unit =  "um",   default =  0)
-        self.param("points",       self.TypeInt,     "Round Points",        unit = "pts",   default = 32)
+        self.param("points",       self.TypeInt,     "Round Points",        unit = "pts",   default = 64)
         self.param("bias",         self.TypeDouble,  "Shape Bias",          unit =  "um",   default =  0)
         self.e_option = self.param("end_option",        self.TypeString,  "Line End Options",      default = 0)
         

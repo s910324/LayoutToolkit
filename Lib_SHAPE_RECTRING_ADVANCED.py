@@ -2,7 +2,7 @@ import pya
 from Lib_STL        import STL
 from Lib_MISC       import MISC
 
-class RECTRING(pya.PCellDeclarationHelper):
+class RECTRING_ADVANCED(pya.PCellDeclarationHelper):
     def __init__(self):
         super().__init__()
         self.geometry_option_dict  = {
@@ -22,20 +22,28 @@ class RECTRING(pya.PCellDeclarationHelper):
         self.g_option = self.param("geometry_option", self.TypeString,  "Geometry Options",      default = 2)
         self.m_option = self.param("modify_option",   self.TypeString,  "Corner Modify Options", default = 1)
         
-        self.param("size_w",       self.TypeDouble,  "Width",               unit =  "um",   default =  5)
-        self.param("size_h",       self.TypeDouble,  "Height",              unit =  "um",   default = 10)
+        self.param("size_w",       self.TypeDouble,  "Width",                   unit =  "um",   default =  5)
+        self.param("size_h",       self.TypeDouble,  "Height",                  unit =  "um",   default = 10)
                 
-        self.param( "line_t",      self.TypeDouble,  "Top Width" ,          unit =  "um",   default =  2)
-        self.param( "line_b",      self.TypeDouble,  "Bottom Width",        unit =  "um",   default =  2)
-        self.param( "line_l",      self.TypeDouble,  "Left Width",          unit =  "um",   default =  2)
-        self.param( "line_r",      self.TypeDouble,  "Right Width",         unit =  "um",   default =  2)
+        self.param( "line_t",      self.TypeDouble,  "Top Width" ,              unit =  "um",   default =  2)
+        self.param( "line_b",      self.TypeDouble,  "Bottom Width",            unit =  "um",   default =  2)
+        self.param( "line_l",      self.TypeDouble,  "Left Width",              unit =  "um",   default =  2)
+        self.param( "line_r",      self.TypeDouble,  "Right Width",             unit =  "um",   default =  2)
 
-        self.param("modify_in",    self.TypeDouble,  "Corner Modify (IN)",  unit =  "um",   default =  0)
-        self.param("modify_out",   self.TypeDouble,  "Corner Modify (OUT)", unit =  "um",   default =  0)
+        self.param("modify_lt_in", self.TypeDouble,  "Corner LT Modify (IN)",   unit =  "um",   default =  0)
+        self.param("modify_lb_in", self.TypeDouble,  "Corner LB Modify (IN)",   unit =  "um",   default =  0)
+        self.param("modify_rt_in", self.TypeDouble,  "Corner RT Modify (IN)",   unit =  "um",   default =  0)
+        self.param("modify_rb_in", self.TypeDouble,  "Corner RB Modify (IN)",   unit =  "um",   default =  0)
+        
+        self.param("modify_lt_out", self.TypeDouble,  "Corner LT Modify (OUT)", unit =  "um",   default =  0)
+        self.param("modify_lb_out", self.TypeDouble,  "Corner LB Modify (OUT)", unit =  "um",   default =  0)
+        self.param("modify_rt_out", self.TypeDouble,  "Corner RT Modify (OUT)", unit =  "um",   default =  0)
+        self.param("modify_rb_out", self.TypeDouble,  "Corner RB Modify (OUT)", unit =  "um",   default =  0)
 
-        self.param("rounding",     self.TypeDouble,  "Global Rounding",     unit =  "um",   default =  0)
-        self.param("points",       self.TypeInt,     "Round Points",        unit = "pts",   default = 64)
-        self.param("bias",         self.TypeDouble,  "Shape Bias",          unit = "um",    default =  0)
+        self.param("rounding",       self.TypeDouble,  "Global Rounding",       unit =  "um",   default =  0)
+        self.param("points",         self.TypeInt,     "Round Points",          unit = "pts",   default = 64)
+        self.param("bias",           self.TypeDouble,  "Shape Bias",            unit =  "um",   default =  0)
+        
         _ = [ self.g_option.add_choice(k,v) for k, v in self.geometry_option_dict.items()]
         _ = [ self.m_option.add_choice(k,v) for k, v in self.modify_option_dict.items()]
 
@@ -48,19 +56,26 @@ class RECTRING(pya.PCellDeclarationHelper):
     
         
     def coerce_parameters_impl(self):         
-        self.size_w     = MISC.f_coerce(self.size_w,     0)   
-        self.size_h     = MISC.f_coerce(self.size_h,     0)   
+        self.size_w        = MISC.f_coerce(self.size_w,         0)   
+        self.size_h        = MISC.f_coerce(self.size_h,         0)   
         
-        self.line_t     = MISC.f_coerce(self.line_t,     0)   
-        self.line_b     = MISC.f_coerce(self.line_b,     0)   
-        self.line_l     = MISC.f_coerce(self.line_l,     0)   
-        self.line_r     = MISC.f_coerce(self.line_r,     0)   
+        self.line_t        = MISC.f_coerce(self.line_t,         0)   
+        self.line_b        = MISC.f_coerce(self.line_b,         0)   
+        self.line_l        = MISC.f_coerce(self.line_l,         0)   
+        self.line_r        = MISC.f_coerce(self.line_r,         0)   
 
-        self.modify_in  = MISC.f_coerce(self.modify_in,  0)   
-        self.modify_out = MISC.f_coerce(self.modify_out, 0)   
+        self.modify_lt_in  = MISC.f_coerce(self.modify_lt_in,   0)   
+        self.modify_lb_in  = MISC.f_coerce(self.modify_lb_in,   0)  
+        self.modify_rt_in  = MISC.f_coerce(self.modify_rt_in,   0)  
+        self.modify_rb_in  = MISC.f_coerce(self.modify_rb_in,   0)  
 
-        self.rounding   = MISC.f_coerce(self.rounding,   0)   
-        self.points     = MISC.f_coerce(self.points,     4) 
+        self.modify_lt_out = MISC.f_coerce(self.modify_lt_out,  0)
+        self.modify_lb_out = MISC.f_coerce(self.modify_lb_out,  0)
+        self.modify_rt_out = MISC.f_coerce(self.modify_rt_out,  0)
+        self.modify_rb_out = MISC.f_coerce(self.modify_rb_out,  0)
+
+        self.rounding      = MISC.f_coerce(self.rounding,       0)   
+        self.points        = MISC.f_coerce(self.points,         4) 
 
     def can_create_from_shape_impl(self):
         return self.shape.is_box() or self.shape.is_polygon() or self.shape.is_path()
@@ -124,8 +139,8 @@ class RECTRING(pya.PCellDeclarationHelper):
             out_box = pya.DBox(out_p1, out_p2)
             
         return in_box, out_box
-    
-    def box_modifier(self, box, modify):
+        
+    def box_modifier(self, box, modify_lt, modify_lb, modify_rt, modify_rb):
         
         if 0 in [box.width(), box.height()]:
             return pya.DPolygon()
@@ -135,7 +150,7 @@ class RECTRING(pya.PCellDeclarationHelper):
             self.name, self.main, 
             4, self.modify_option, 
             box.width(), box.height(),
-            modify, modify, modify, modify, 
+            modify_lt, modify_lb, modify_rt, modify_rb, 
             0, self.points
         ]
 
@@ -160,14 +175,14 @@ class RECTRING(pya.PCellDeclarationHelper):
             self.modify_out,
         ])
         '''
-        poly_in  = self.box_modifier( in_box,  self.modify_in)
-        poly_out = self.box_modifier(out_box, self.modify_out)        
+        poly_in  = self.box_modifier( in_box, self.modify_lt_in,  self.modify_lb_in,  self.modify_rt_in,  self.modify_rb_in)
+        poly_out = self.box_modifier(out_box, self.modify_lt_out, self.modify_lb_out, self.modify_rt_out, self.modify_rb_out)
         ring_reg = pya.Region(poly_out.to_itype(unit)) - pya.Region(poly_in.to_itype(unit))
         
         if self.rounding:
             ring_reg.round_corners(self.rounding/unit, self.rounding/unit, self.points)
         
-        return ring_reg
+        return ring_reg 
         
     def produce_impl(self):
         unit     = self.layout.dbu
